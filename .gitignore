@@ -1,0 +1,7 @@
+# Add IDE folder
+.idea
+.vscode
+
+#config file
+/maincore/conf.json
+/maincore/*.exe
