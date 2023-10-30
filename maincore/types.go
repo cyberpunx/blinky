@@ -31,18 +31,23 @@ func NewTool(config *Config, client *http.Client) *Tool {
 }
 
 type Thread struct {
-	Title  string
-	Url    string
-	Author *User
-	Posts  []*Post
+	Title          string
+	Url            string
+	Author         *User
+	Created        *time.Time
+	LastPost       *Post
+	SecondLastPost *Post
+	Pages          []string
+	Posts          []*Post
 }
 
 type Post struct {
-	Url        string
-	Author     *User
-	DatePosted *time.Time
-	DateEdited *time.Time
-	Content    string
+	Url     string
+	Author  *User
+	Created *time.Time
+	Edited  *time.Time
+	Content string
+	Id      string
 }
 
 type User struct {

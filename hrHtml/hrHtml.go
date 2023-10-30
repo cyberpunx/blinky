@@ -5,7 +5,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"localdev/HrHelper/util"
 	"log"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -63,43 +62,7 @@ func GetSubforumThreads(html string) []string {
 	return threads
 }
 
-func SubGetPostUser(html string) string {
-	reader := strings.NewReader(html)
-	doc, err := goquery.NewDocumentFromReader(reader)
-	if err != nil {
-		return "<User Not Found>"
-	}
-
-	// Find the <dd> element with class "lastpost" inside the <dl> element
-	ddLastPost := doc.Find("dl.icon dd.lastpost")
-
-	// Extract the date
-	date := ddLastPost.Find("a").Text()
-
-	return date
-}
-
-func SubGetPostDateAndTime(html string) (string, string) {
-	re := regexp.MustCompile(`(?i)((Ayer|Hoy) a las (\d{2}:\d{2})|(\d{2}/\d{2}/\d{4}, \d{2}:\d{2}))`)
-	matches := re.FindStringSubmatch(html)
-
-	if len(matches) < 5 {
-		return "<Date not found>", "<Time not found>"
-	}
-
-	date, time := "", ""
-
-	if strings.Contains(matches[0], "Hoy a las") || strings.Contains(matches[0], "Ayer a las") {
-		date = matches[2]
-		time = matches[3]
-	} else {
-		date, time = util.SplitDateAndTime(matches[0])
-	}
-
-	return date, time
-}
-
-func SubGetPostTitle(htmlString string) string {
+func SubGetThreadUrl(htmlString string) string {
 	reader := strings.NewReader(htmlString)
 	doc, err := goquery.NewDocumentFromReader(reader)
 	if err != nil {
@@ -107,9 +70,9 @@ func SubGetPostTitle(htmlString string) string {
 	}
 
 	// Find the <h2> element with class "topic-title" and get its text
-	title := doc.Find("h2.topic-title").Text()
+	threadURL := doc.Find("h2.topic-title a").AttrOr("href", "")
 
-	return title
+	return threadURL
 }
 
 func ThreadExtractTitleAndURL(htmlFragment string) (title, url string, err error) {
@@ -193,6 +156,18 @@ func PostGetUserUrl(html string) string {
 	return userUrl
 }
 
+func PostGetUserHouse(html string) string {
+	reader := strings.NewReader(html)
+	doc, err := goquery.NewDocumentFromReader(reader)
+	if err != nil {
+		return "<User URL Not Found>"
+	}
+
+	information := doc.Find("div.informacion img").Last()
+	house := information.AttrOr("alt", "")
+	return house
+}
+
 func PostGetUrl(html string) string {
 	reader := strings.NewReader(html)
 	doc, err := goquery.NewDocumentFromReader(reader)
@@ -231,7 +206,7 @@ func PostGetDateAndTime(html string) *time.Time {
 		dateStr = strings.Split(datetimeStr, ",")[0]
 		timeStr = strings.TrimSpace(strings.Split(datetimeStr, ",")[1])
 	}
-	layout := "2/01/2006 15:04"
+	layout := "2/1/2006 15:04"
 	dateTime, err := time.Parse(layout, dateStr+" "+timeStr)
 	util.Panic(err)
 	return &dateTime

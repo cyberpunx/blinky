@@ -12,7 +12,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func LoadConfig(configPath string, config interface{}) {
@@ -77,7 +79,7 @@ func getConfig() *Config {
 }
 
 func main() {
-	fmt.Println("\n === HR HELPER ===")
+	fmt.Println("\n === 🧚‍♀️¡BLINKY A SU SERVICIO! 💫 ===")
 	config := getConfig()
 	user := *config.Username
 	pass := *config.Password
@@ -86,10 +88,15 @@ func main() {
 	forumDateTime, error := util.GetTimeFromTimeZone("America/Mexico_City")
 	util.Panic(error)
 	fmt.Println("Forum Datetime: " + Purple + forumDateTime.Format("01/02/2006 15:04") + Reset + "\n")
+
 	//threadHtml := hrTool.getThread("t83491-happy-birthday")
-	threadHtml := hrTool.getThread("t83679p100-happy-halloween")
-	thread := hrTool.parseThread(threadHtml)
-	fmt.Println("Thread Title: " + Purple + thread.Title + Reset)
+	//threadHtml := hrTool.getThread("t83679p100-happy-halloween")
+	//threadHtml := hrTool.getThread("t82929-club-de-pociones-solaris-j-fierhart-neria-spektral-pocion-de-la-risa")
+	//thread := hrTool.parseThread(threadHtml)
+	//fmt.Println("Thread Title: " + Purple + thread.Title + Reset)
+	//potionSubHtml := hrTool.getSubforum(*config.PotionsClubUrl)
+	//hrTool.parseSubforum(potionSubHtml)
+	hrTool.ProcessPotionsSubforum()
 }
 
 func loginAndGetCookies(user, pass string) *http.Client {
@@ -139,10 +146,10 @@ func loginAndGetCookies(user, pass string) *http.Client {
 	return client
 }
 
-func (o *Tool) getPotionsSub() string {
-	fmt.Println("Getting Sub: " + Purple + "Pociones" + Reset)
+func (o *Tool) getSubforum(subUrl string) string {
+	fmt.Println("Getting Sub: " + Purple + subUrl + Reset)
 
-	req, err := http.NewRequest("GET", "https://www.hogwartsrol.com/"+*o.Config.PotionsClubUrl, nil)
+	req, err := http.NewRequest("GET", "https://www.hogwartsrol.com/"+subUrl, nil)
 	util.Panic(err)
 
 	resp, err := o.Client.Do(req)
@@ -156,20 +163,17 @@ func (o *Tool) getPotionsSub() string {
 	return string(body)
 }
 
-func (o *Tool) parsePotionsSub(subHtml string) {
-	potionsSubforumHtml := o.getPotionsSub()
-	potionThreads := hrHtml.GetSubforumThreads(potionsSubforumHtml)
+func (o *Tool) parseSubforum(subHtml string) []*Thread {
+	threadList := hrHtml.GetSubforumThreads(subHtml)
 
-	for _, thread := range potionThreads {
-		postDate, postTime := hrHtml.SubGetPostDateAndTime(thread)
-		postUser := hrHtml.SubGetPostUser(thread)
-		postTitle := hrHtml.SubGetPostTitle(thread)
-		fmt.Println("Title: " + Purple + postTitle + Reset)
-		fmt.Println("Date: " + Purple + postDate + Reset)
-		fmt.Println("Time: " + Purple + postTime + Reset)
-		fmt.Println("User: " + Purple + postUser + Reset)
-		fmt.Println("")
+	var threads []*Thread
+	for _, thread := range threadList {
+		threadUrl := hrHtml.SubGetThreadUrl(thread)
+		threadHtml := o.getThread(threadUrl)
+		thread := o.parseThread(threadHtml)
+		threads = append(threads, thread)
 	}
+	return threads
 }
 
 func (o *Tool) getForumHome() string {
@@ -212,7 +216,6 @@ func (o *Tool) parseThread(threadHtml string) *Thread {
 
 	var posts []*Post
 	var pagesUrl []string
-	currentPage := 1
 	pagesUrl = append(pagesUrl, threadUrl)
 	for {
 		// Extract the post list from the current page
@@ -233,29 +236,131 @@ func (o *Tool) parseThread(threadHtml string) *Thread {
 		pagesUrl = append(pagesUrl, nextPageURL)
 		nextPageHTML := o.getThread(nextPageURL)
 		threadHtml = nextPageHTML
-		currentPage++
+	}
+
+	firstPostId := posts[0].Id
+	var filteredPosts []*Post
+	filteredPosts = append(filteredPosts, posts[0])
+	for _, post := range posts {
+		if post.Id != firstPostId {
+			filteredPosts = append(filteredPosts, post)
+		}
 	}
 
 	return &Thread{
-		Title: threadTitle,
-		Url:   threadUrl,
-		Posts: posts,
+		Title:          threadTitle,
+		Url:            threadUrl,
+		Author:         posts[0].Author,
+		Created:        posts[0].Created,
+		LastPost:       posts[len(posts)-1],
+		SecondLastPost: posts[len(posts)-2],
+		Pages:          pagesUrl,
+		Posts:          filteredPosts,
 	}
 }
 
 func (o *Tool) parsePost(postHtml string) *Post {
 	postUser := hrHtml.PostGetUserName(postHtml)
 	postUserUrl := hrHtml.PostGetUserUrl(postHtml)
+	postUserHouse := hrHtml.PostGetUserHouse(postHtml)
 	postDateTime := hrHtml.PostGetDateAndTime(postHtml)
 	postEditedDateTime := hrHtml.PostGetEditedDateAndTime(postHtml)
 	postUrl := hrHtml.PostGetUrl(postHtml)
 	postContent := hrHtml.PostGetContent(postHtml)
 
 	return &Post{
-		Url:        postUrl,
-		Author:     &User{Username: postUser, Url: postUserUrl, House: ""},
-		DatePosted: postDateTime,
-		DateEdited: postEditedDateTime,
-		Content:    postContent,
+		Url:     postUrl,
+		Author:  &User{Username: postUser, Url: postUserUrl, House: postUserHouse},
+		Created: postDateTime,
+		Edited:  postEditedDateTime,
+		Content: postContent,
+		Id:      postUrl[strings.LastIndex(postUrl, "#")+1:],
 	}
+}
+
+func (o *Tool) ProcessPotionsSubforum() {
+	potionSubHtml := o.getSubforum(*config.PotionsClubUrl)
+	subforumThreads := o.parseSubforum(potionSubHtml)
+
+	for threadIndex, thread := range subforumThreads {
+		fmt.Println("Processing Thread: " + Purple + strconv.Itoa(threadIndex+1) + "/" + strconv.Itoa(len(subforumThreads)) + Reset)
+		ClubProcessor(*thread)
+
+		/*
+			for postIndex, post := range thread.Posts {
+				fmt.Println("Processing Post: " + Purple + strconv.Itoa(postIndex) + "/" + strconv.Itoa(len(thread.Posts)) + Reset)
+
+			}
+		*/
+	}
+}
+
+func ClubProcessor(thread Thread) int {
+	turnCount := 1
+	player1 := ""
+	player2 := ""
+	moderator := thread.Author.Username
+
+	// Initialize maps to count each player's posts and store the time of the last post by each player
+	playerPostCount := make(map[string]int)
+	lastPostTime := *thread.Created
+
+	player1PostCount := 0
+	player2PostCount := 0
+
+	// Set the time threshold to 72 hours
+	timeThreshold := 72 * time.Hour
+
+	// Iterate through the posts to identify players and count turns
+	for _, post := range thread.Posts {
+		author := post.Author.Username
+
+		// Skip the moderator's posts
+		if author == moderator {
+			fmt.Printf("%s (Moderator) post \n", author)
+			continue
+		}
+
+		// Identify the players
+		if player1 == "" {
+			player1 = author
+		} else if player2 == "" && author != player1 {
+			player2 = author
+		}
+
+		// Count the post for the current player and update the last post time
+		playerPostCount[author]++
+
+		if author == player1 {
+			player1PostCount++
+			fmt.Printf("%s (Player) post %s \n", author, strconv.Itoa(player1PostCount))
+		} else if author == player2 {
+			player2PostCount++
+			fmt.Printf("%s (Player) post %s \n", author, strconv.Itoa(player2PostCount))
+		}
+
+		// Check if the current post exceeds the time threshold
+		if lastPostTime.Add(timeThreshold).Before(*post.Created) {
+			fmt.Printf("Player %s exceeded the 72-hour limit between posts.\n", author)
+			// Handle the situation as needed (e.g., return an error or take appropriate action)
+		}
+		lastPostTime = *post.Created
+
+		// Check if both players have posted, indicating a turn
+		if playerPostCount[player1] > 0 && playerPostCount[player2] > 0 {
+			fmt.Printf("----  End of turn %s \n", strconv.Itoa(turnCount))
+			turnCount++
+			playerPostCount[player1] = 0
+			playerPostCount[player2] = 0
+		}
+	}
+
+	//fmt.Println("Player 1:", player1)
+	//fmt.Println("Player 2:", player2)
+	//fmt.Println("Moderator:", moderator)
+	//fmt.Println("Turn Count:", turnCount)
+	//fmt.Println("Player 1 Post Count:", player1PostCount)
+	//fmt.Println("Player 2 Post Count:", player2PostCount)
+
+	return turnCount
 }
