@@ -21,8 +21,8 @@ type Tool struct {
 }
 
 func NewTool(config *Config, client *http.Client) *Tool {
-	forumDateTime, error := util.GetTimeFromTimeZone("America/Mexico_City")
-	util.Panic(error)
+	forumDateTime, err := util.GetTimeFromTimeZone("America/Mexico_City")
+	util.Panic(err)
 	return &Tool{
 		Config:        config,
 		Client:        client,

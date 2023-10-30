@@ -85,8 +85,8 @@ func main() {
 	pass := *config.Password
 	client := loginAndGetCookies(user, pass)
 	hrTool := NewTool(config, client)
-	forumDateTime, error := util.GetTimeFromTimeZone("America/Mexico_City")
-	util.Panic(error)
+	forumDateTime, err := util.GetTimeFromTimeZone("America/Mexico_City")
+	util.Panic(err)
 	fmt.Println("Forum Datetime: " + Purple + forumDateTime.Format("01/02/2006 15:04") + Reset + "\n")
 
 	//threadHtml := hrTool.getThread("t83491-happy-birthday")
