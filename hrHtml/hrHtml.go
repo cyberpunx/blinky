@@ -5,6 +5,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"localdev/HrHelper/util"
 	"log"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -183,6 +184,24 @@ func PostGetUrl(html string) string {
 	return url
 }
 
+func parseDateTime(datetimeStr string) (string, string) {
+	// Split the datetime string using '-' or ','
+	parts := strings.FieldsFunc(datetimeStr, func(r rune) bool { return r == '-' || r == ',' })
+
+	// Initialize date and time strings
+	var dateStr, timeStr string
+
+	if len(parts) == 2 {
+		dateStr = parts[0]
+		timeStr = strings.TrimSpace(parts[1])
+	} else if len(parts) == 3 {
+		dateStr = parts[0]
+		timeStr = parts[1] + " " + strings.TrimSpace(parts[2])
+	}
+
+	return dateStr, timeStr
+}
+
 func PostGetDateAndTime(html string) *time.Time {
 	reader := strings.NewReader(html)
 	doc, err := goquery.NewDocumentFromReader(reader)
@@ -261,4 +280,33 @@ func PostGetContent(html string) string {
 	content, _ = doc.Find("div.content").Html()
 
 	return content
+}
+
+func PostGetDices(html string) []string {
+	reader := strings.NewReader(html)
+	doc, err := goquery.NewDocumentFromReader(reader)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	pattern1 := `^Número aleatorio \(\d+,\d+\) : \d+$`
+	pattern2 := `^Número aleatorio \(\d+,\d+\) : \(\+\d+\) : \d+$`
+
+	var diceRolls []string
+	// Find all <dl> elements with class "codebox"
+	doc.Find("dl.codebox").Each(func(i int, dlSelection *goquery.Selection) {
+		// Find <dd> tags inside the <dl> element
+		ddSelection := dlSelection.Find("dd")
+		ddSelection.Each(func(j int, ddSelection *goquery.Selection) {
+			// Print the text content of <dd>
+			diceLine := ddSelection.Text()
+			//match both patterns
+			match1, _ := regexp.MatchString(pattern1, diceLine)
+			match2, _ := regexp.MatchString(pattern2, diceLine)
+			if match1 || match2 {
+				diceRolls = append(diceRolls, diceLine)
+			}
+
+		})
+	})
+	return diceRolls
 }

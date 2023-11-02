@@ -6,12 +6,23 @@ import (
 	"time"
 )
 
+const (
+	LogTagInfo    = "Blinky!"
+	LogTagPotions = "potionsClub"
+)
+
 type Config struct {
-	Username       *string `json:"username" meta-obscure:"default"`
-	Password       *string `json:"password" meta-obscure:"default"`
-	BaseUrl        *string `json:"baseUrl" meta-obscure:"default"`
-	PotionsClubUrl *string `json:"potionsClubUrl" meta-obscure:"default"`
-	UnicodeOutput  *bool   `json:"unicodeOutput" meta-obscure:"default"`
+	Username      *string `json:"username" meta-obscure:"default"`
+	Password      *string `json:"password" meta-obscure:"default"`
+	BaseUrl       *string `json:"baseUrl" meta-obscure:"default"`
+	UnicodeOutput *bool   `json:"unicodeOutput" meta-obscure:"default"`
+	Tasks         []*Task `json:"tasks" meta-obscure:"default"`
+}
+
+type Task struct {
+	Urls      *[]string `json:"urls" meta-obscure:"default"`
+	Method    *string   `json:"method" meta-obscure:"default"`
+	TimeLimit *int      `json:"timeLimit" meta-obscure:"default"`
 }
 
 type Tool struct {
@@ -31,14 +42,13 @@ func NewTool(config *Config, client *http.Client) *Tool {
 }
 
 type Thread struct {
-	Title          string
-	Url            string
-	Author         *User
-	Created        *time.Time
-	LastPost       *Post
-	SecondLastPost *Post
-	Pages          []string
-	Posts          []*Post
+	Title    string
+	Url      string
+	Author   *User
+	Created  *time.Time
+	LastPost *Post
+	Pages    []string
+	Posts    []*Post
 }
 
 type Post struct {
@@ -48,12 +58,27 @@ type Post struct {
 	Edited  *time.Time
 	Content string
 	Id      string
+	Dices   []*Dice
+}
+
+type Dice struct {
+	DiceLine string
+	Result   int
 }
 
 type User struct {
 	Username string
 	Url      string
 	House    string
+}
+
+type Potion struct {
+	Name         string
+	Ingredients  []string
+	ScoreTarget  int
+	ScoreCurrent int
+	TurnTarget   int
+	TurnCurrent  int
 }
 
 var config *Config

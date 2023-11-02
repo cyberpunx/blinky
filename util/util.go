@@ -14,6 +14,34 @@ func Panic(err error) {
 	}
 }
 
+type P map[string]interface{}
+
+func Fprint(format string, p P) string {
+	args, i := make([]string, len(p)*2), 0
+	for k, v := range p {
+		args[i] = "{" + k + "}"
+		args[i+1] = fmt.Sprint(v)
+		i += 2
+	}
+	return strings.NewReplacer(args...).Replace(format)
+}
+
+func UtoA(unicodeStr string) string {
+	unicodeStr = strings.Replace(unicodeStr, "\033[0m", "", -1)
+	unicodeStr = strings.Replace(unicodeStr, "\033[31m", "", -1)
+	unicodeStr = strings.Replace(unicodeStr, "\033[32m", "", -1)
+	unicodeStr = strings.Replace(unicodeStr, "\033[33m", "", -1)
+	unicodeStr = strings.Replace(unicodeStr, "\033[34m", "", -1)
+	unicodeStr = strings.Replace(unicodeStr, "\033[35m", "", -1)
+	unicodeStr = strings.Replace(unicodeStr, "\033[36m", "", -1)
+	unicodeStr = strings.Replace(unicodeStr, "\033[37m", "", -1)
+	unicodeStr = strings.Replace(unicodeStr, "\033[97m", "", -1)
+	unicodeStr = strings.Replace(unicodeStr, "✔", "[OK]", -1)
+	unicodeStr = strings.Replace(unicodeStr, "❌", "[X]", -1)
+	unicodeStr = strings.Replace(unicodeStr, "▶", "-->", -1)
+	return unicodeStr
+}
+
 func SplitDateAndTime(dateTime string) (string, string) {
 	parts := strings.Split(dateTime, ", ")
 	if len(parts) != 2 {
