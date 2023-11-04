@@ -14,6 +14,10 @@ func Panic(err error) {
 	}
 }
 
+func PStr(s string) *string {
+	return &s
+}
+
 type P map[string]interface{}
 
 func Fprint(format string, p P) string {

@@ -89,7 +89,7 @@ func (o *Tool) parsePost(postHtml string) *Post {
 	postUser := hrHtml.PostGetUserName(postHtml)
 	postUserUrl := hrHtml.PostGetUserUrl(postHtml)
 	postUserHouse := hrHtml.PostGetUserHouse(postHtml)
-	postDateTime := hrHtml.PostGetDateAndTime(postHtml)
+	postDateTime := hrHtml.PostGetDateAndTime(postHtml, o.ForumDateTime)
 	postEditedDateTime := hrHtml.PostGetEditedDateAndTime(postHtml)
 	postUrl := hrHtml.PostGetUrl(postHtml)
 	postContent := hrHtml.PostGetContent(postHtml)

@@ -23,6 +23,7 @@ type Task struct {
 	Urls      *[]string `json:"urls" meta-obscure:"default"`
 	Method    *string   `json:"method" meta-obscure:"default"`
 	TimeLimit *int      `json:"timeLimit" meta-obscure:"default"`
+	TurnLimit *int      `json:"turnLimit" meta-obscure:"default"`
 }
 
 type Tool struct {
@@ -70,15 +71,6 @@ type User struct {
 	Username string
 	Url      string
 	House    string
-}
-
-type Potion struct {
-	Name         string
-	Ingredients  []string
-	ScoreTarget  int
-	ScoreCurrent int
-	TurnTarget   int
-	TurnCurrent  int
 }
 
 var config *Config

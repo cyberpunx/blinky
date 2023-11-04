@@ -90,44 +90,51 @@ func main() {
 		taskUrls := *task.Urls
 		taskMethod := *task.Method
 		timeLimit := *task.TimeLimit
+		turnLimit := *task.TurnLimit
 
 		switch taskMethod {
 		case "subforumPotionsClub":
 			fmt.Println("\n\n ========= SUBFORUM CLUB DE POCIONES =========\n\n")
+			if len(taskUrls) == 0 {
+				fmt.Println("No subforums URLs to process")
+			}
 			for _, taskUrl := range taskUrls {
 				fmt.Println("=== Fetching Subforum === \n")
 				potionSubHtml := hrTool.getSubforum(taskUrl)
 				subforumThreads := hrTool.parseSubforum(potionSubHtml)
 				fmt.Println("=== Fetch Ended === \n")
-				hrTool.ProcessPotionsSubforum(subforumThreads, timeLimit)
+				hrTool.ProcessPotionsSubforum(subforumThreads, turnLimit, timeLimit)
 			}
 		case "threadPotionsClub":
 			fmt.Println("\n\n ========= THREADS CLUB DE POCIONES =========\n\n")
+			if len(taskUrls) == 0 {
+				fmt.Println("No Threads URLs to process")
+			}
 			for _, taskUrl := range taskUrls {
 				potionThreadHtml := hrTool.getThread(taskUrl)
 				potionThread := hrTool.parseThread(potionThreadHtml)
-				hrTool.ProcessPotionsThread(*potionThread, timeLimit)
+				hrTool.ProcessPotionsThread(*potionThread, turnLimit, timeLimit)
 			}
 		}
 
 	}
 }
 
-func (o *Tool) ProcessPotionsSubforum(subforumThreads []*Thread, timeLimit int) {
+func (o *Tool) ProcessPotionsSubforum(subforumThreads []*Thread, turnLimit int, timeLimit int) {
 	fmt.Println("=== Potions Begin ===")
 	for threadIndex, thread := range subforumThreads {
 		fmt.Println("Processing Thread: " + Purple + strconv.Itoa(threadIndex+1) + "/" + strconv.Itoa(len(subforumThreads)) + Reset)
 		fmt.Println("Thread: " + Purple + thread.Title + Reset)
-		ClubPotionsProcessor(*thread, timeLimit)
+		ClubPotionsProcessor(*thread, turnLimit, timeLimit, o.ForumDateTime)
 		fmt.Println("\n")
 	}
 	fmt.Println("=== Potions End === \n")
 }
 
-func (o *Tool) ProcessPotionsThread(thread Thread, timeLimit int) {
+func (o *Tool) ProcessPotionsThread(thread Thread, turnLimit int, timeLimit int) {
 	fmt.Println("=== Potion Thread Begin ===")
 	fmt.Println("Thread: " + Purple + thread.Title + Reset)
-	ClubPotionsProcessor(thread, timeLimit)
+	ClubPotionsProcessor(thread, turnLimit, timeLimit, o.ForumDateTime)
 	fmt.Println("\n")
 	fmt.Println("=== Potion Thread End === \n")
 }

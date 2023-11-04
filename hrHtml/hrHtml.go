@@ -202,7 +202,7 @@ func parseDateTime(datetimeStr string) (string, string) {
 	return dateStr, timeStr
 }
 
-func PostGetDateAndTime(html string) *time.Time {
+func PostGetDateAndTime(html string, forumDateTime time.Time) *time.Time {
 	reader := strings.NewReader(html)
 	doc, err := goquery.NewDocumentFromReader(reader)
 	if err != nil {
@@ -218,9 +218,7 @@ func PostGetDateAndTime(html string) *time.Time {
 		//extract time from "Hoy a las !2:01" or "Ayer a las 12:01"
 		timeStr = strings.Split(datetimeStr, " ")[3]
 		dateStr = strings.Split(datetimeStr, " ")[0]
-		location, _ := time.LoadLocation("America/New_York")
-		currentTime := time.Now().In(location)
-		dateStr = util.AdjustDateTimeToStr(currentTime, dateStr)
+		dateStr = util.AdjustDateTimeToStr(forumDateTime, dateStr)
 	} else {
 		dateStr = strings.Split(datetimeStr, ",")[0]
 		timeStr = strings.TrimSpace(strings.Split(datetimeStr, ",")[1])
