@@ -5,3 +5,4 @@
 #config file
 *conf.json
 *.exe
+/vendor/
