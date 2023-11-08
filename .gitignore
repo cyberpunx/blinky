@@ -3,5 +3,5 @@
 .vscode
 
 #config file
-*/conf.json
-*/*.exe
+*conf.json
+*.exe
