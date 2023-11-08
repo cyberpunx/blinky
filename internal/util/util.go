@@ -3,10 +3,24 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	"localdev/HrHelper/internal/config"
 	"net/http"
 	"strings"
 	"time"
 )
+
+func PrintResponseStatus(status string) {
+	statusColor := ""
+	statusEmoji := ""
+	if status == "200 OK" {
+		statusColor = config.Green
+		statusEmoji = " " + config.CheckEmoji + " "
+	} else {
+		statusColor = config.Red
+		statusEmoji = " " + config.CrossEmoji + " "
+	}
+	fmt.Println("Response Status: " + statusColor + statusEmoji + " " + status + config.Reset)
+}
 
 func Panic(err error) {
 	if err != nil {

@@ -1,9 +1,11 @@
-package main
+package potion
 
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"localdev/HrHelper/util"
+	"localdev/HrHelper/internal/config"
+	"localdev/HrHelper/internal/hrparse"
+	"localdev/HrHelper/internal/util"
 	"strconv"
 	"strings"
 	"time"
@@ -35,14 +37,14 @@ type PotionsUser struct {
 	House       string
 	Role        string
 	PlayerBonus int
-	Posts       []*Post
+	Posts       []*hrparse.Post
 }
 type PotionClubReport struct {
 	Player1   PotionsUser
 	Player2   PotionsUser
 	Moderator PotionsUser
 	Other     []PotionsUser
-	Thread    Thread
+	Thread    hrparse.Thread
 	Potion    Potion
 	Status    Status
 	Score     PotionClubScoreBoard
@@ -68,7 +70,7 @@ type PotionClubScoreBoard struct {
 	Success        bool
 }
 
-func getPotionFromThread(thread Thread) *Potion {
+func getPotionFromThread(thread hrparse.Thread) *Potion {
 	potionPostHtml := thread.Posts[0].Content
 
 	reader := strings.NewReader(potionPostHtml)
@@ -112,7 +114,7 @@ func getPotionFromThread(thread Thread) *Potion {
 		TurnLimit:   turnLimitInt,
 	}
 }
-func identifyRolesOnThread(thread Thread) (player1 PotionsUser, player2 PotionsUser, moderator PotionsUser, other []PotionsUser) {
+func identifyRolesOnThread(thread hrparse.Thread) (player1 PotionsUser, player2 PotionsUser, moderator PotionsUser, other []PotionsUser) {
 	moderator.Name = thread.Author.Username
 	moderator.Role = Moderator
 
@@ -154,7 +156,7 @@ func identifyRolesOnThread(thread Thread) (player1 PotionsUser, player2 PotionsU
 
 	return
 }
-func isPlayer(post Post, player1, player2 PotionsUser) bool {
+func isPlayer(post hrparse.Post, player1, player2 PotionsUser) bool {
 	return post.Author.Username == player1.Name || post.Author.Username == player2.Name
 }
 func findPlayerAndRole(username string, player1, player2, moderator PotionsUser, others []PotionsUser) (*PotionsUser, string) {
@@ -173,8 +175,8 @@ func findPlayerAndRole(username string, player1, player2, moderator PotionsUser,
 	}
 	return nil, ""
 }
-func removeOtherPostsFromThread(player1 PotionsUser, player2 PotionsUser, moderator PotionsUser, other []PotionsUser, thread Thread) Thread {
-	var threadWithoutOthers Thread
+func removeOtherPostsFromThread(player1 PotionsUser, player2 PotionsUser, moderator PotionsUser, other []PotionsUser, thread hrparse.Thread) hrparse.Thread {
+	var threadWithoutOthers hrparse.Thread
 	threadWithoutOthers = thread
 	threadWithoutOthers.Posts = nil
 
@@ -199,14 +201,14 @@ func printPostReport(isPlayer bool, postCount int, postUser string, role string,
 	strReport := ""
 	timeStatus := ""
 	if !isPlayer {
-		strReport = "{i}) " + Purple + "{postUser} " + Reset + " ({role})" + Reset
+		strReport = "{i}) " + config.Purple + "{postUser} " + config.Reset + " ({role})" + config.Reset
 	} else {
 		if onTime {
-			timeStatus = Green + "OK" + Reset
+			timeStatus = config.Green + "OK" + config.Reset
 		} else {
-			timeStatus = Red + "FAIL" + Reset
+			timeStatus = config.Red + "FAIL" + config.Reset
 		}
-		strReport = "{i}) Turn {turnCount} " + Purple + "{postUser} " + Reset + " ({role}) | Time: {timeStatus} | Dice: {turnDice} | Total: {diceTotal}" + Reset
+		strReport = "{i}) Turn {turnCount} " + config.Purple + "{postUser} " + config.Reset + " ({role}) | Time: {timeStatus} | Dice: {turnDice} | Total: {diceTotal}" + config.Reset
 	}
 
 	s := util.Fprint(strReport,
@@ -216,11 +218,11 @@ func printPostReport(isPlayer bool, postCount int, postUser string, role string,
 			"turnCount":  strconv.Itoa(turnCount),
 			"timeStatus": timeStatus,
 			"turnDice":   turnDice,
-			"diceTotal":  Purple + strconv.Itoa(diceTotal) + Reset,
+			"diceTotal":  config.Purple + strconv.Itoa(diceTotal) + config.Reset,
 		})
 	return s
 }
-func ClubPotionsProcessor(rawThread Thread, turnLimit int, timeLimitHours int, forumDateTime time.Time) PotionClubReport {
+func ClubPotionsProcessor(rawThread hrparse.Thread, turnLimit int, timeLimitHours int, forumDateTime time.Time) PotionClubReport {
 	timeThreshold := time.Duration(timeLimitHours) * time.Hour
 	potion := getPotionFromThread(rawThread)
 	player1, player2, moderator, others := identifyRolesOnThread(rawThread)
@@ -277,7 +279,7 @@ func ClubPotionsProcessor(rawThread Thread, turnLimit int, timeLimitHours int, f
 				postDice = "N/A"
 			} else {
 				postDiceValue = post.Dices[0].Result
-				postDice = Yellow + strconv.Itoa(post.Dices[0].Result) + Reset
+				postDice = config.Yellow + strconv.Itoa(post.Dices[0].Result) + config.Reset
 				diceTotal += postDiceValue
 				result.Score.DiceScoreSum += postDiceValue
 			}
@@ -296,9 +298,9 @@ func ClubPotionsProcessor(rawThread Thread, turnLimit int, timeLimitHours int, f
 		if threadLastPost.Id == post.Id && isPlayerFlag {
 			elapsedTime := forumDateTime.Sub(*post.Created)
 			if elapsedTime > timeThreshold {
-				fmt.Println(Red+"Time Passed: "+Reset, elapsedTime)
+				fmt.Println(config.Red+"Time Passed: "+config.Reset, elapsedTime)
 			} else {
-				fmt.Println(Green+"Time Passed: "+Reset, elapsedTime)
+				fmt.Println(config.Green+"Time Passed: "+config.Reset, elapsedTime)
 			}
 		}
 

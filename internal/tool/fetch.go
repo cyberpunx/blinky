@@ -1,17 +1,18 @@
-package main
+package tool
 
 import (
 	"fmt"
 	"io/ioutil"
-	"localdev/HrHelper/util"
+	"localdev/HrHelper/internal/config"
+	"localdev/HrHelper/internal/util"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
 	"strings"
 )
 
-func loginAndGetCookies(user, pass string) *http.Client {
-	fmt.Println("Logging in with User: " + Purple + user + " " + Reset)
+func LoginAndGetCookies(user, pass string) *http.Client {
+	fmt.Println("Logging in with User: " + config.Purple + user + " " + config.Reset)
 	params := url.Values{}
 	params.Add("username", user)
 	params.Add("password", pass)
@@ -53,12 +54,12 @@ func loginAndGetCookies(user, pass string) *http.Client {
 	util.Panic(err)
 
 	defer resp.Body.Close()
-	printResponseStatus(resp.Status)
+	util.PrintResponseStatus(resp.Status)
 	return client
 }
 
-func (o *Tool) getSubforum(subUrl string) string {
-	fmt.Println("Getting Sub: " + Purple + subUrl + Reset)
+func (o *Tool) GetSubforum(subUrl string) string {
+	fmt.Println("Getting Sub: " + config.Purple + subUrl + config.Reset)
 
 	req, err := http.NewRequest("GET", "https://www.hogwartsrol.com/"+subUrl, nil)
 	util.Panic(err)
@@ -66,7 +67,7 @@ func (o *Tool) getSubforum(subUrl string) string {
 	resp, err := o.Client.Do(req)
 	util.Panic(err)
 	defer resp.Body.Close()
-	printResponseStatus(resp.Status)
+	util.PrintResponseStatus(resp.Status)
 
 	body, err := ioutil.ReadAll(resp.Body)
 	util.Panic(err)
@@ -74,7 +75,7 @@ func (o *Tool) getSubforum(subUrl string) string {
 	return string(body)
 }
 
-func (o *Tool) getForumHome() string {
+func (o *Tool) GetForumHome() string {
 	fmt.Println("Getting Home (Get Forum Datetime): ")
 
 	req, err := http.NewRequest("GET", "https://www.hogwartsrol.com/", nil)
@@ -83,7 +84,7 @@ func (o *Tool) getForumHome() string {
 	resp, err := o.Client.Do(req)
 	util.Panic(err)
 	defer resp.Body.Close()
-	printResponseStatus(resp.Status)
+	util.PrintResponseStatus(resp.Status)
 
 	body, err := ioutil.ReadAll(resp.Body)
 	util.Panic(err)
@@ -91,8 +92,8 @@ func (o *Tool) getForumHome() string {
 	return string(body)
 }
 
-func (o *Tool) getThread(threadUrl string) string {
-	fmt.Println("Getting Thread: " + Purple + threadUrl + Reset)
+func (o *Tool) GetThread(threadUrl string) string {
+	fmt.Println("Getting Thread: " + config.Purple + threadUrl + config.Reset)
 
 	req, err := http.NewRequest("GET", "https://www.hogwartsrol.com/"+threadUrl, nil)
 	util.Panic(err)
@@ -100,7 +101,7 @@ func (o *Tool) getThread(threadUrl string) string {
 	resp, err := o.Client.Do(req)
 	util.Panic(err)
 	defer resp.Body.Close()
-	printResponseStatus(resp.Status)
+	util.PrintResponseStatus(resp.Status)
 
 	body, err := ioutil.ReadAll(resp.Body)
 	util.Panic(err)

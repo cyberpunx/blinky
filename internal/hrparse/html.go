@@ -1,9 +1,9 @@
-package hrHtml
+package hrparse
 
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"localdev/HrHelper/util"
+	"localdev/HrHelper/internal/util"
 	"log"
 	"regexp"
 	"strings"
