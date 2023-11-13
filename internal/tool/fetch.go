@@ -95,7 +95,14 @@ func (o *Tool) GetForumHome() string {
 func (o *Tool) GetThread(threadUrl string) string {
 	fmt.Println("Getting Thread: " + config.Purple + threadUrl + config.Reset)
 
-	req, err := http.NewRequest("GET", "https://www.hogwartsrol.com/"+threadUrl, nil)
+	baseDomain := *o.Config.BaseUrl
+
+	_, err := url.ParseRequestURI(threadUrl)
+	if err != nil || !strings.HasPrefix(threadUrl, baseDomain) {
+		threadUrl = baseDomain + threadUrl
+	}
+
+	req, err := http.NewRequest("GET", threadUrl, nil)
 	util.Panic(err)
 
 	resp, err := o.Client.Do(req)

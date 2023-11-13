@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"localdev/HrHelper/internal/chronology"
 	conf "localdev/HrHelper/internal/config"
 	"localdev/HrHelper/internal/tool"
 	"localdev/HrHelper/internal/util"
@@ -24,8 +25,8 @@ func main() {
 	for _, task := range tasks {
 		taskUrls := *task.Urls
 		taskMethod := *task.Method
-		timeLimit := *task.TimeLimit
-		turnLimit := *task.TurnLimit
+		timeLimit := task.TimeLimit
+		turnLimit := task.TurnLimit
 
 		switch taskMethod {
 		case "subforumPotionsClub":
@@ -38,7 +39,7 @@ func main() {
 				potionSubHtml := hrTool.GetSubforum(taskUrl)
 				subforumThreads := hrTool.ParseSubforum(potionSubHtml)
 				fmt.Println("=== Fetch Ended === \n")
-				hrTool.ProcessPotionsSubforum(subforumThreads, turnLimit, timeLimit)
+				hrTool.ProcessPotionsSubforum(subforumThreads, *turnLimit, *timeLimit)
 			}
 		case "threadPotionsClub":
 			fmt.Println("\n\n ========= THREADS CLUB DE POCIONES =========\n\n")
@@ -48,7 +49,28 @@ func main() {
 			for _, taskUrl := range taskUrls {
 				potionThreadHtml := hrTool.GetThread(taskUrl)
 				potionThread := hrTool.ParseThread(potionThreadHtml)
-				hrTool.ProcessPotionsThread(*potionThread, turnLimit, timeLimit)
+				hrTool.ProcessPotionsThread(*potionThread, *turnLimit, *timeLimit)
+			}
+		case "mainThreadChronology":
+			fmt.Println("\n\n ========= MAIN THREAD CHRONOLOGY =========\n\n")
+			if len(taskUrls) == 0 {
+				fmt.Println("No Posts URLs to process")
+			}
+			for _, taskUrl := range taskUrls {
+				chronoMainThreadHtml := hrTool.GetThread(taskUrl)
+				chronoMainThread := hrTool.ParseThread(chronoMainThreadHtml)
+				hrTool.ProcessChronoMainThread(*chronoMainThread, hrTool)
+			}
+		case "threadChronology":
+			fmt.Println("\n\n ========= THREAD CHRONOLOGY =========\n\n")
+			if len(taskUrls) == 0 {
+				fmt.Println("No Posts URLs to process")
+			}
+			for _, taskUrl := range taskUrls {
+				threadHtml := hrTool.GetThread(taskUrl)
+				thread := hrTool.ParseThread(threadHtml)
+				chronoThread := chronology.ChronoThreadProcessor(*thread)
+				fmt.Printf("%s\n", util.MarshalJsonPretty(chronoThread))
 			}
 		}
 

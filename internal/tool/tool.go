@@ -2,10 +2,15 @@ package tool
 
 import (
 	"fmt"
+	"localdev/HrHelper/internal/chronology"
 	conf "localdev/HrHelper/internal/config"
 	"localdev/HrHelper/internal/hrparse"
 	"localdev/HrHelper/internal/potion"
 	"localdev/HrHelper/internal/util"
+	"log"
+	"net/url"
+	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -49,6 +54,10 @@ func (o *Tool) ParseThread(threadHtml string) *hrparse.Thread {
 		pagesUrl = append(pagesUrl, nextPageURL)
 		nextPageHTML := o.GetThread(nextPageURL)
 		threadHtml = nextPageHTML
+	}
+
+	if posts == nil || len(posts) == 0 {
+		return nil
 	}
 
 	firstPostId := posts[0].Id
@@ -109,4 +118,68 @@ func (o *Tool) ProcessPotionsThread(thread hrparse.Thread, turnLimit int, timeLi
 	potion.ClubPotionsProcessor(thread, turnLimit, timeLimit, o.ForumDateTime)
 	fmt.Println("\n")
 	fmt.Println("=== Potion Thread End === \n")
+}
+
+func (o *Tool) ProcessChronoMainThread(chronoMainThread hrparse.Thread, hrTool *Tool) {
+	fmt.Println("=== Chronology Thread Begin ===")
+	fmt.Println("Thread: " + conf.Purple + chronoMainThread.Title + conf.Reset)
+
+	var chronoLinks []string
+	for _, post := range chronoMainThread.Posts {
+		chronoLink := hrparse.PostGetLinks(post.Content)
+		chronoLinks = append(chronoLinks, chronoLink...)
+	}
+
+	re, err := regexp.Compile(`p\d+`)
+	if err != nil {
+		panic(err)
+	}
+	var cleanedURLs []string
+	for _, link := range chronoLinks {
+		parsedURL, err := url.Parse(link)
+		util.Panic(err)
+		parsedURL.Fragment = ""
+		urlWithoutFragment := parsedURL.String()
+		cleanedUrl := re.ReplaceAllString(urlWithoutFragment, "")
+		cleanedURLs = append(cleanedURLs, cleanedUrl)
+	}
+
+	var threadListHtml []string
+	for _, link := range cleanedURLs {
+		chronoThreadtHtml := hrTool.GetThread(link)
+		if hrparse.IsThreadVisible(chronoThreadtHtml) {
+			threadListHtml = append(threadListHtml, chronoThreadtHtml)
+		}
+	}
+
+	var chronoThreads []*chronology.ChronoThread
+	for _, threadHtml := range threadListHtml {
+		thread := hrTool.ParseThread(threadHtml)
+		chronoThread := chronology.ChronoThreadProcessor(*thread)
+		chronoThreads = append(chronoThreads, chronoThread)
+	}
+
+	chronoReport := chronology.ChronoReport{
+		ChronoThreads: chronoThreads,
+	}
+	//fmt.Printf("%s\n", util.MarshalJsonPretty(chronoReport))
+
+	stringContents := fmt.Sprintf("%s\n", util.MarshalJsonPretty(chronoReport))
+	filename := "output.json"
+
+	// Create the file
+	file, err := os.Create(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	// Write the content to file
+	_, err = file.WriteString(stringContents)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("\n")
+	fmt.Println("=== Chronology Thread End === \n")
 }

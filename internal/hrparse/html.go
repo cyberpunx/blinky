@@ -3,6 +3,7 @@ package hrparse
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	htmlpkg "html"
 	"localdev/HrHelper/internal/util"
 	"log"
 	"regexp"
@@ -238,7 +239,9 @@ func PostGetEditedDateAndTime(html string) *time.Time {
 
 	// Find the <div> element with class "linkfecha"
 	dateDiv := doc.Find("div.post3")
-	dateDivStr, _ := dateDiv.Html()
+	encodedString, _ := dateDiv.Html()
+
+	dateDivStr := htmlpkg.UnescapeString(encodedString)
 
 	if strings.Contains(dateDivStr, "Última edición por") {
 		numberIndex := -1
@@ -257,7 +260,7 @@ func PostGetEditedDateAndTime(html string) *time.Time {
 				result := dateDivStr[numberIndex:editedIndex]
 				dateStr := strings.Split(result, ",")[0]
 				timeStr := strings.TrimSpace(strings.Split(result, ",")[1])
-				layout := "2/01/2006 15:04"
+				layout := "2/1/2006 15:04"
 				dateTime, err := time.Parse(layout, dateStr+" "+timeStr)
 				util.Panic(err)
 				return &dateTime
@@ -307,4 +310,43 @@ func PostGetDices(html string) []string {
 		})
 	})
 	return diceRolls
+}
+
+func PostGetLinks(contentHtml string) []string {
+	reader := strings.NewReader(contentHtml)
+	doc, err := goquery.NewDocumentFromReader(reader)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	var allLinks []string
+	// Find all <a> elements inside the <div class="content">
+	doc.Find("a").Each(func(i int, aSelection *goquery.Selection) {
+		// Get the href attribute
+		link, _ := aSelection.Attr("href")
+		allLinks = append(allLinks, link)
+	})
+
+	var filteredLinks []string
+	for _, link := range allLinks {
+		parts := strings.Split(link, "/")
+		if len(parts) > 3 {
+			firstSegment := parts[3]
+			if strings.HasPrefix(firstSegment, "t") { //only threads links
+				filteredLinks = append(filteredLinks, link)
+			}
+		}
+	}
+
+	return filteredLinks
+}
+
+func IsThreadVisible(html string) bool {
+	searchString := `<h1 class="page-title">Informaciones</h1><p>Lo sentimos pero solamente los <strong>usuarios que tengan permisos</strong> pueden leer temas en este foro</p>`
+
+	if strings.Contains(html, searchString) {
+		return false
+	} else {
+		return true
+	}
 }

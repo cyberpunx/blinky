@@ -1,6 +1,7 @@
 package util
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"localdev/HrHelper/internal/config"
@@ -116,4 +117,12 @@ func AdjustDateTimeToStr(currentDate time.Time, dateString string) string {
 		return currentDate.AddDate(0, 0, -1).Format("02/01/2006")
 	}
 	return dateString
+}
+
+func MarshalJsonPretty(i interface{}) []byte {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetIndent("", "    ")
+	Panic(encoder.Encode(i))
+	return buffer.Bytes()
 }
