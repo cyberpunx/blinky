@@ -101,15 +101,18 @@ func (o *Tool) ParsePost(postHtml string) *hrparse.Post {
 	}
 }
 
-func (o *Tool) ProcessPotionsSubforum(subforumThreads []*hrparse.Thread, turnLimit int, timeLimit int) {
+func (o *Tool) ProcessPotionsSubforum(subforumThreads []*hrparse.Thread, turnLimit int, timeLimit int) []potion.PotionClubReport {
 	fmt.Println("=== Potions Begin ===")
+	var reportList []potion.PotionClubReport
 	for threadIndex, thread := range subforumThreads {
 		fmt.Println("Processing Thread: " + conf.Purple + strconv.Itoa(threadIndex+1) + "/" + strconv.Itoa(len(subforumThreads)) + conf.Reset)
 		fmt.Println("Thread: " + conf.Purple + thread.Title + conf.Reset)
-		potion.ClubPotionsProcessor(*thread, turnLimit, timeLimit, o.ForumDateTime)
+		report := potion.ClubPotionsProcessor(*thread, turnLimit, timeLimit, o.ForumDateTime)
+		reportList = append(reportList, report)
 		fmt.Println("\n")
 	}
 	fmt.Println("=== Potions End === \n")
+	return reportList
 }
 
 func (o *Tool) ProcessPotionsThread(thread hrparse.Thread, turnLimit int, timeLimit int) {

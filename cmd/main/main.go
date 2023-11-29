@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"localdev/HrHelper/internal/chronology"
 	conf "localdev/HrHelper/internal/config"
+	"localdev/HrHelper/internal/endpoint"
 	"localdev/HrHelper/internal/tool"
 	"localdev/HrHelper/internal/util"
 )
@@ -21,7 +21,15 @@ func main() {
 	util.Panic(err)
 	fmt.Println("Forum Datetime: " + conf.Purple + forumDateTime.Format("01/02/2006 15:04") + conf.Reset + "\n")
 
-	tasks := config.Tasks
+	endpoints := endpoint.NewEndpoints(hrTool)
+	endpoints.ConfigureAndServeEndpoints()
+
+	select {}
+
+}
+
+/*
+tasks := config.Tasks
 	for _, task := range tasks {
 		taskUrls := *task.Urls
 		taskMethod := *task.Method
@@ -75,4 +83,4 @@ func main() {
 		}
 
 	}
-}
+*/
