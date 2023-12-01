@@ -54,9 +54,11 @@ type PotionClubReport struct {
 }
 
 type PotionClubTurn struct {
-	Player    PotionsUser
-	Number    int
-	DiceValue int
+	Player      PotionsUser
+	Number      int
+	DiceValue   int
+	OnTime      bool
+	TimeElapsed time.Time
 }
 
 type PotionClubScoreBoard struct {
@@ -272,7 +274,6 @@ func ClubPotionsProcessor(rawThread hrparse.Thread, turnLimit int, timeLimitHour
 				result.Status = StatusWaitingPlayer1
 			}
 			postOnTime = isPostWithinTimeLimit(*post.Created, lastPostTime, timeThreshold)
-			lastPostTime = *post.Created
 
 			postDiceValue := 0
 			if len(post.Dices) != 1 {
@@ -284,12 +285,14 @@ func ClubPotionsProcessor(rawThread hrparse.Thread, turnLimit int, timeLimitHour
 				result.Score.DiceScoreSum += postDiceValue
 			}
 			turn := PotionClubTurn{
-				Player:    *postPlayer,
-				Number:    turnCount,
-				DiceValue: postDiceValue,
+				Player:      *postPlayer,
+				Number:      turnCount,
+				DiceValue:   postDiceValue,
+				OnTime:      postOnTime,
+				TimeElapsed: lastPostTime,
 			}
 			result.Turns = append(result.Turns, turn)
-
+			lastPostTime = *post.Created
 		}
 
 		s := printPostReport(isPlayerFlag, postCount, postUser, postRole, turnCount, postOnTime, postDice, diceTotal)

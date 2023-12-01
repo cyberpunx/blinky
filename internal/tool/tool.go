@@ -115,12 +115,14 @@ func (o *Tool) ProcessPotionsSubforum(subforumThreads []*hrparse.Thread, turnLim
 	return reportList
 }
 
-func (o *Tool) ProcessPotionsThread(thread hrparse.Thread, turnLimit int, timeLimit int) {
+func (o *Tool) ProcessPotionsThread(thread hrparse.Thread, turnLimit int, timeLimit int) potion.PotionClubReport {
 	fmt.Println("=== Potion Thread Begin ===")
 	fmt.Println("Thread: " + conf.Purple + thread.Title + conf.Reset)
-	potion.ClubPotionsProcessor(thread, turnLimit, timeLimit, o.ForumDateTime)
+	var report potion.PotionClubReport
+	report = potion.ClubPotionsProcessor(thread, turnLimit, timeLimit, o.ForumDateTime)
 	fmt.Println("\n")
 	fmt.Println("=== Potion Thread End === \n")
+	return report
 }
 
 func (o *Tool) ProcessChronoMainThread(chronoMainThread hrparse.Thread, hrTool *Tool) {

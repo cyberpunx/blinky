@@ -19,13 +19,13 @@ type SubforumPotionsClubResponse struct {
 	ThreadReports []potion.PotionClubReport `json:"threadReports"`
 }
 
-type ThreadsPotionClubRequest struct {
+type ThreadsPotionsClubRequest struct {
 	ThreadsUrls *[]string `json:"threadUrls"`
 	TimeLimit   *int      `json:"timeLimit"`
 	TurnLimit   *int      `json:"turnLimit"`
 }
 
-type ThreadsPotionClubResponse struct {
+type ThreadsPotionsClubResponse struct {
 	ThreadReports []potion.PotionClubReport `json:"threadReports"`
 }
 

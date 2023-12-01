@@ -212,7 +212,7 @@ func PostGetDateAndTime(html string, forumDateTime time.Time) *time.Time {
 
 	var timeStr, dateStr string
 
-	// Find the <div> element with class "linkfecha"
+	// Find the <div> element with class "linkfecha" format:  29/11/2023, 08:31
 	dateDiv := doc.Find("div.linkfecha").Nodes[0].LastChild
 	datetimeStr := strings.TrimSpace(dateDiv.Data)
 	if strings.Contains(datetimeStr, "Hoy a las") || strings.Contains(datetimeStr, "Ayer a las") {
