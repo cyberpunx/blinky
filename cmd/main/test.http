@@ -1,0 +1,24 @@
+### POTION SUBFORUM
+POST localhost:8080/subforumPotionsClub
+Content-Type: application/json
+
+{
+  "subforumUrls": [
+    "f98-club-de-pociones"
+  ],
+  "timeLimit": 72,
+  "turnLimit": 8
+}
+
+### POTION THREADS
+POST localhost:8080/threadsPotionsClub
+Content-Type: application/json
+
+{
+  "threadUrls": [
+    "https://www.hogwartsrol.com/t87796-club-de-pociones-neria-spektral-ophelia-e-greengrass-filtro-de-paz",
+    "https://www.hogwartsrol.com/t87991-club-de-pociones-selene-windhunter-juho-hayha-pocima-para-dormir"
+  ],
+  "timeLimit": 72,
+  "turnLimit": 8
+}
