@@ -15,7 +15,10 @@ func LoadConfig(configPath string, config interface{}) {
 	//util.Panic(err)
 	b, err := ioutil.ReadFile(filepath.Join(parentPath, configPath))
 	if err != nil {
-		panic(err)
+		b, err = ioutil.ReadFile(filepath.Join(configPath))
+		if err != nil {
+			panic(err)
+		}
 	}
 	err = json.Unmarshal(b, config)
 	if err != nil {
