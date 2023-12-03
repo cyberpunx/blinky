@@ -194,9 +194,9 @@ func (o *Tool) ProcessPotionsSubforumList(subForumUrls *[]string, timeLimit, tur
 		fmt.Println("No subforums URLs to process")
 	}
 	var reportMainList []potion.PotionClubReport
-	for _, url := range *subForumUrls {
+	for _, subforumUrl := range *subForumUrls {
 		fmt.Println("=== Fetching Subforum === \n")
-		potionSubHtml := o.getSubforum(url)
+		potionSubHtml := o.getSubforum(subforumUrl)
 		subforumThreads := o.parseSubforum(potionSubHtml)
 		fmt.Println("=== Fetch Ended === \n")
 		reportList := o.processPotionsSubforum(subforumThreads, *timeLimit, *turnLimit)
@@ -212,8 +212,8 @@ func (o *Tool) ProcessPotionsThreadList(threadsUrls *[]string, timeLimit, turnLi
 		fmt.Println("No Threads URLs to process")
 	}
 	var reportMainList []potion.PotionClubReport
-	for _, url := range *threadsUrls {
-		potionThreadHtml := o.getThread(url)
+	for _, threadUrl := range *threadsUrls {
+		potionThreadHtml := o.getThread(threadUrl)
 		potionThread := o.parseThread(potionThreadHtml)
 		report := o.processPotionsThread(*potionThread, *turnLimit, *timeLimit)
 		reportMainList = append(reportMainList, report)
