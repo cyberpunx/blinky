@@ -1,8 +1,6 @@
 package chronology
 
-import (
-	"localdev/HrHelper/internal/hrparse"
-)
+import "localdev/HrHelper/internal/hogwartsforum/parser"
 
 type ChronoReport struct {
 	ChronoThreads []*ChronoThread
@@ -18,7 +16,7 @@ type ChronoPost struct {
 	Message string
 }
 
-func ChronoThreadProcessor(Thread hrparse.Thread) *ChronoThread {
+func ChronoThreadProcessor(Thread parser.Thread) *ChronoThread {
 
 	var chronoPosts []*ChronoPost
 	for _, post := range Thread.Posts {

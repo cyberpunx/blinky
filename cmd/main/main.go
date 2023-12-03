@@ -4,7 +4,7 @@ import (
 	"fmt"
 	conf "localdev/HrHelper/internal/config"
 	"localdev/HrHelper/internal/endpoint"
-	"localdev/HrHelper/internal/tool"
+	tool2 "localdev/HrHelper/internal/hogwartsforum/tool"
 	"localdev/HrHelper/internal/util"
 )
 
@@ -15,8 +15,8 @@ func main() {
 
 	user := *config.Username
 	pass := *config.Password
-	client := tool.LoginAndGetCookies(user, pass)
-	hrTool := tool.NewTool(config, client)
+	client := tool2.LoginAndGetCookies(user, pass)
+	hrTool := tool2.NewTool(config, client)
 	forumDateTime, err := util.GetTimeFromTimeZone("America/Mexico_City")
 	util.Panic(err)
 	fmt.Println("Forum Datetime: " + conf.Purple + forumDateTime.Format("01/02/2006 15:04") + conf.Reset + "\n")
@@ -44,10 +44,10 @@ tasks := config.Tasks
 			}
 			for _, taskUrl := range taskUrls {
 				fmt.Println("=== Fetching Subforum === \n")
-				potionSubHtml := hrTool.GetSubforum(taskUrl)
-				subforumThreads := hrTool.ParseSubforum(potionSubHtml)
+				potionSubHtml := hrTool.getSubforum(taskUrl)
+				subforumThreads := hrTool.parseSubforum(potionSubHtml)
 				fmt.Println("=== Fetch Ended === \n")
-				hrTool.ProcessPotionsSubforum(subforumThreads, *turnLimit, *timeLimit)
+				hrTool.processPotionsSubforum(subforumThreads, *turnLimit, *timeLimit)
 			}
 		case "threadPotionsClub":
 			fmt.Println("\n\n ========= THREADS CLUB DE POCIONES =========\n\n")
@@ -55,9 +55,9 @@ tasks := config.Tasks
 				fmt.Println("No Threads URLs to process")
 			}
 			for _, taskUrl := range taskUrls {
-				potionThreadHtml := hrTool.GetThread(taskUrl)
-				potionThread := hrTool.ParseThread(potionThreadHtml)
-				hrTool.ProcessPotionsThread(*potionThread, *turnLimit, *timeLimit)
+				potionThreadHtml := hrTool.getThread(taskUrl)
+				potionThread := hrTool.parseThread(potionThreadHtml)
+				hrTool.processPotionsThread(*potionThread, *turnLimit, *timeLimit)
 			}
 		case "mainThreadChronology":
 			fmt.Println("\n\n ========= MAIN THREAD CHRONOLOGY =========\n\n")
@@ -65,9 +65,9 @@ tasks := config.Tasks
 				fmt.Println("No Posts URLs to process")
 			}
 			for _, taskUrl := range taskUrls {
-				chronoMainThreadHtml := hrTool.GetThread(taskUrl)
-				chronoMainThread := hrTool.ParseThread(chronoMainThreadHtml)
-				hrTool.ProcessChronoMainThread(*chronoMainThread, hrTool)
+				chronoMainThreadHtml := hrTool.getThread(taskUrl)
+				chronoMainThread := hrTool.parseThread(chronoMainThreadHtml)
+				hrTool.processChronoMainThread(*chronoMainThread, hrTool)
 			}
 		case "threadChronology":
 			fmt.Println("\n\n ========= THREAD CHRONOLOGY =========\n\n")
@@ -75,8 +75,8 @@ tasks := config.Tasks
 				fmt.Println("No Posts URLs to process")
 			}
 			for _, taskUrl := range taskUrls {
-				threadHtml := hrTool.GetThread(taskUrl)
-				thread := hrTool.ParseThread(threadHtml)
+				threadHtml := hrTool.getThread(taskUrl)
+				thread := hrTool.parseThread(threadHtml)
 				chronoThread := chronology.ChronoThreadProcessor(*thread)
 				fmt.Printf("%s\n", util.MarshalJsonPretty(chronoThread))
 			}

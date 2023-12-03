@@ -1,9 +1,9 @@
 package endpoint
 
 import (
-	"localdev/HrHelper/internal/chronology"
-	"localdev/HrHelper/internal/potion"
-	"localdev/HrHelper/internal/tool"
+	"localdev/HrHelper/internal/hogwartsforum/dynamics/chronology"
+	"localdev/HrHelper/internal/hogwartsforum/dynamics/potion"
+	"localdev/HrHelper/internal/hogwartsforum/tool"
 )
 
 type Endpoints struct {

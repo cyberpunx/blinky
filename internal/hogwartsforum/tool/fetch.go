@@ -58,7 +58,7 @@ func LoginAndGetCookies(user, pass string) *http.Client {
 	return client
 }
 
-func (o *Tool) GetSubforum(subUrl string) string {
+func (o *Tool) getSubforum(subUrl string) string {
 	fmt.Println("Getting Sub: " + config.Purple + subUrl + config.Reset)
 
 	req, err := http.NewRequest("GET", "https://www.hogwartsrol.com/"+subUrl, nil)
@@ -75,7 +75,7 @@ func (o *Tool) GetSubforum(subUrl string) string {
 	return string(body)
 }
 
-func (o *Tool) GetForumHome() string {
+func (o *Tool) getForumHome() string {
 	fmt.Println("Getting Home (Get Forum Datetime): ")
 
 	req, err := http.NewRequest("GET", "https://www.hogwartsrol.com/", nil)
@@ -92,7 +92,7 @@ func (o *Tool) GetForumHome() string {
 	return string(body)
 }
 
-func (o *Tool) GetThread(threadUrl string) string {
+func (o *Tool) getThread(threadUrl string) string {
 	fmt.Println("Getting Thread: " + config.Purple + threadUrl + config.Reset)
 
 	baseDomain := *o.Config.BaseUrl

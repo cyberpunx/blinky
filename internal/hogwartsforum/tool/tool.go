@@ -2,10 +2,10 @@ package tool
 
 import (
 	"fmt"
-	"localdev/HrHelper/internal/chronology"
 	conf "localdev/HrHelper/internal/config"
-	"localdev/HrHelper/internal/hrparse"
-	"localdev/HrHelper/internal/potion"
+	"localdev/HrHelper/internal/hogwartsforum/dynamics/chronology"
+	"localdev/HrHelper/internal/hogwartsforum/dynamics/potion"
+	parser "localdev/HrHelper/internal/hogwartsforum/parser"
 	"localdev/HrHelper/internal/util"
 	"log"
 	"net/url"
@@ -15,36 +15,36 @@ import (
 	"strings"
 )
 
-func (o *Tool) ParseSubforum(subHtml string) []*hrparse.Thread {
-	threadList := hrparse.GetSubforumThreads(subHtml)
+func (o *Tool) parseSubforum(subHtml string) []*parser.Thread {
+	threadList := parser.GetSubforumThreads(subHtml)
 
-	var threads []*hrparse.Thread
+	var threads []*parser.Thread
 	for _, thread := range threadList {
-		threadUrl := hrparse.SubGetThreadUrl(thread)
-		threadHtml := o.GetThread(threadUrl)
-		thread := o.ParseThread(threadHtml)
+		threadUrl := parser.SubGetThreadUrl(thread)
+		threadHtml := o.getThread(threadUrl)
+		thread := o.parseThread(threadHtml)
 		threads = append(threads, thread)
 	}
 	return threads
 }
 
-func (o *Tool) ParseThread(threadHtml string) *hrparse.Thread {
-	threadTitle, threadUrl, err := hrparse.ThreadExtractTitleAndURL(threadHtml)
+func (o *Tool) parseThread(threadHtml string) *parser.Thread {
+	threadTitle, threadUrl, err := parser.ThreadExtractTitleAndURL(threadHtml)
 	util.Panic(err)
 
-	var posts []*hrparse.Post
+	var posts []*parser.Post
 	var pagesUrl []string
 	pagesUrl = append(pagesUrl, threadUrl)
 	for {
 		// Extract the post list from the current page
-		postList := hrparse.ThreadListPosts(threadHtml)
+		postList := parser.ThreadListPosts(threadHtml)
 		for _, post := range postList {
-			post := o.ParsePost(post)
+			post := o.parsePost(post)
 			posts = append(posts, post)
 		}
 
 		// Check if there is a "next" link in the pagination
-		nextPageURL, hasMore := hrparse.ThreadNextPageURL(threadHtml)
+		nextPageURL, hasMore := parser.ThreadNextPageURL(threadHtml)
 
 		if !hasMore {
 			break // No more pages to fetch
@@ -52,7 +52,7 @@ func (o *Tool) ParseThread(threadHtml string) *hrparse.Thread {
 
 		// Fetch the next page and update the threadHtml
 		pagesUrl = append(pagesUrl, nextPageURL)
-		nextPageHTML := o.GetThread(nextPageURL)
+		nextPageHTML := o.getThread(nextPageURL)
 		threadHtml = nextPageHTML
 	}
 
@@ -61,7 +61,7 @@ func (o *Tool) ParseThread(threadHtml string) *hrparse.Thread {
 	}
 
 	firstPostId := posts[0].Id
-	var filteredPosts []*hrparse.Post
+	var filteredPosts []*parser.Post
 	filteredPosts = append(filteredPosts, posts[0])
 	for _, post := range posts {
 		if post.Id != firstPostId {
@@ -69,7 +69,7 @@ func (o *Tool) ParseThread(threadHtml string) *hrparse.Thread {
 		}
 	}
 
-	return &hrparse.Thread{
+	return &parser.Thread{
 		Title:    threadTitle,
 		Url:      threadUrl,
 		Author:   posts[0].Author,
@@ -80,19 +80,19 @@ func (o *Tool) ParseThread(threadHtml string) *hrparse.Thread {
 	}
 }
 
-func (o *Tool) ParsePost(postHtml string) *hrparse.Post {
-	postUser := hrparse.PostGetUserName(postHtml)
-	postUserUrl := hrparse.PostGetUserUrl(postHtml)
-	postUserHouse := hrparse.PostGetUserHouse(postHtml)
-	postDateTime := hrparse.PostGetDateAndTime(postHtml, o.ForumDateTime)
-	postEditedDateTime := hrparse.PostGetEditedDateAndTime(postHtml)
-	postUrl := hrparse.PostGetUrl(postHtml)
-	postContent := hrparse.PostGetContent(postHtml)
-	dices := hrparse.ParseDiceRoll(hrparse.PostGetDices(postHtml))
+func (o *Tool) parsePost(postHtml string) *parser.Post {
+	postUser := parser.PostGetUserName(postHtml)
+	postUserUrl := parser.PostGetUserUrl(postHtml)
+	postUserHouse := parser.PostGetUserHouse(postHtml)
+	postDateTime := parser.PostGetDateAndTime(postHtml, o.ForumDateTime)
+	postEditedDateTime := parser.PostGetEditedDateAndTime(postHtml)
+	postUrl := parser.PostGetUrl(postHtml)
+	postContent := parser.PostGetContent(postHtml)
+	dices := parser.ParseDiceRoll(parser.PostGetDices(postHtml))
 
-	return &hrparse.Post{
+	return &parser.Post{
 		Url:     postUrl,
-		Author:  &hrparse.User{Username: postUser, Url: postUserUrl, House: postUserHouse},
+		Author:  &parser.User{Username: postUser, Url: postUserUrl, House: postUserHouse},
 		Created: postDateTime,
 		Edited:  postEditedDateTime,
 		Content: postContent,
@@ -101,13 +101,12 @@ func (o *Tool) ParsePost(postHtml string) *hrparse.Post {
 	}
 }
 
-func (o *Tool) ProcessPotionsSubforum(subforumThreads []*hrparse.Thread, turnLimit int, timeLimit int) []potion.PotionClubReport {
+func (o *Tool) processPotionsSubforum(subforumThreads []*parser.Thread, turnLimit int, timeLimit int) []potion.PotionClubReport {
 	fmt.Println("=== Potions Begin ===")
 	var reportList []potion.PotionClubReport
 	for threadIndex, thread := range subforumThreads {
 		fmt.Println("Processing Thread: " + conf.Purple + strconv.Itoa(threadIndex+1) + "/" + strconv.Itoa(len(subforumThreads)) + conf.Reset)
-		fmt.Println("Thread: " + conf.Purple + thread.Title + conf.Reset)
-		report := potion.ClubPotionsProcessor(*thread, turnLimit, timeLimit, o.ForumDateTime)
+		report := o.processPotionsThread(*thread, turnLimit, timeLimit)
 		reportList = append(reportList, report)
 		fmt.Println("\n")
 	}
@@ -115,23 +114,23 @@ func (o *Tool) ProcessPotionsSubforum(subforumThreads []*hrparse.Thread, turnLim
 	return reportList
 }
 
-func (o *Tool) ProcessPotionsThread(thread hrparse.Thread, turnLimit int, timeLimit int) potion.PotionClubReport {
+func (o *Tool) processPotionsThread(thread parser.Thread, turnLimit int, timeLimit int) potion.PotionClubReport {
 	fmt.Println("=== Potion Thread Begin ===")
 	fmt.Println("Thread: " + conf.Purple + thread.Title + conf.Reset)
 	var report potion.PotionClubReport
-	report = potion.ClubPotionsProcessor(thread, turnLimit, timeLimit, o.ForumDateTime)
+	report = potion.PotionGetReportFromThread(thread, turnLimit, timeLimit, o.ForumDateTime)
 	fmt.Println("\n")
 	fmt.Println("=== Potion Thread End === \n")
 	return report
 }
 
-func (o *Tool) ProcessChronoMainThread(chronoMainThread hrparse.Thread, hrTool *Tool) {
+func (o *Tool) processChronoMainThread(chronoMainThread parser.Thread, hrTool *Tool) {
 	fmt.Println("=== Chronology Thread Begin ===")
 	fmt.Println("Thread: " + conf.Purple + chronoMainThread.Title + conf.Reset)
 
 	var chronoLinks []string
 	for _, post := range chronoMainThread.Posts {
-		chronoLink := hrparse.PostGetLinks(post.Content)
+		chronoLink := parser.PostGetLinks(post.Content)
 		chronoLinks = append(chronoLinks, chronoLink...)
 	}
 
@@ -151,15 +150,15 @@ func (o *Tool) ProcessChronoMainThread(chronoMainThread hrparse.Thread, hrTool *
 
 	var threadListHtml []string
 	for _, link := range cleanedURLs {
-		chronoThreadtHtml := hrTool.GetThread(link)
-		if hrparse.IsThreadVisible(chronoThreadtHtml) {
+		chronoThreadtHtml := hrTool.getThread(link)
+		if parser.IsThreadVisible(chronoThreadtHtml) {
 			threadListHtml = append(threadListHtml, chronoThreadtHtml)
 		}
 	}
 
 	var chronoThreads []*chronology.ChronoThread
 	for _, threadHtml := range threadListHtml {
-		thread := hrTool.ParseThread(threadHtml)
+		thread := hrTool.parseThread(threadHtml)
 		chronoThread := chronology.ChronoThreadProcessor(*thread)
 		chronoThreads = append(chronoThreads, chronoThread)
 	}
@@ -187,4 +186,38 @@ func (o *Tool) ProcessChronoMainThread(chronoMainThread hrparse.Thread, hrTool *
 
 	fmt.Println("\n")
 	fmt.Println("=== Chronology Thread End === \n")
+}
+
+func (o *Tool) ProcessPotionsSubforumList(subForumUrls *[]string, timeLimit, turnLimit *int) []potion.PotionClubReport {
+	fmt.Println("\n\n ========= SUBFORUM CLUB DE POCIONES =========\n\n")
+	if len(*subForumUrls) == 0 {
+		fmt.Println("No subforums URLs to process")
+	}
+	var reportMainList []potion.PotionClubReport
+	for _, url := range *subForumUrls {
+		fmt.Println("=== Fetching Subforum === \n")
+		potionSubHtml := o.getSubforum(url)
+		subforumThreads := o.parseSubforum(potionSubHtml)
+		fmt.Println("=== Fetch Ended === \n")
+		reportList := o.processPotionsSubforum(subforumThreads, *timeLimit, *turnLimit)
+		reportMainList = append(reportMainList, reportList...)
+	}
+
+	return reportMainList
+}
+
+func (o *Tool) ProcessPotionsThreadList(threadsUrls *[]string, timeLimit, turnLimit *int) []potion.PotionClubReport {
+	fmt.Println("\n\n ========= THREADS DE POCIONES =========\n\n")
+	if len(*threadsUrls) == 0 {
+		fmt.Println("No Threads URLs to process")
+	}
+	var reportMainList []potion.PotionClubReport
+	for _, url := range *threadsUrls {
+		potionThreadHtml := o.getThread(url)
+		potionThread := o.parseThread(potionThreadHtml)
+		report := o.processPotionsThread(*potionThread, *turnLimit, *timeLimit)
+		reportMainList = append(reportMainList, report)
+	}
+
+	return reportMainList
 }

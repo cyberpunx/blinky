@@ -1,4 +1,4 @@
-package hrparse
+package parser
 
 import "time"
 

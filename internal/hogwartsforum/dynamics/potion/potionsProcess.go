@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"localdev/HrHelper/internal/config"
-	"localdev/HrHelper/internal/hrparse"
+	"localdev/HrHelper/internal/hogwartsforum/parser"
 	"localdev/HrHelper/internal/util"
 	"strconv"
 	"strings"
@@ -37,14 +37,14 @@ type PotionsUser struct {
 	House       string
 	Role        string
 	PlayerBonus int
-	Posts       []*hrparse.Post
+	Posts       []*parser.Post
 }
 type PotionClubReport struct {
 	Player1   PotionsUser
 	Player2   PotionsUser
 	Moderator PotionsUser
 	Other     []PotionsUser
-	Thread    hrparse.Thread
+	Thread    parser.Thread
 	Potion    Potion
 	Status    Status
 	Score     PotionClubScoreBoard
@@ -72,7 +72,7 @@ type PotionClubScoreBoard struct {
 	Success        bool
 }
 
-func getPotionFromThread(thread hrparse.Thread) *Potion {
+func getPotionFromThread(thread parser.Thread) *Potion {
 	potionPostHtml := thread.Posts[0].Content
 
 	reader := strings.NewReader(potionPostHtml)
@@ -116,7 +116,7 @@ func getPotionFromThread(thread hrparse.Thread) *Potion {
 		TurnLimit:   turnLimitInt,
 	}
 }
-func identifyRolesOnThread(thread hrparse.Thread) (player1 PotionsUser, player2 PotionsUser, moderator PotionsUser, other []PotionsUser) {
+func identifyRolesOnThread(thread parser.Thread) (player1 PotionsUser, player2 PotionsUser, moderator PotionsUser, other []PotionsUser) {
 	moderator.Name = thread.Author.Username
 	moderator.Role = Moderator
 
@@ -158,7 +158,7 @@ func identifyRolesOnThread(thread hrparse.Thread) (player1 PotionsUser, player2 
 
 	return
 }
-func isPlayer(post hrparse.Post, player1, player2 PotionsUser) bool {
+func isPlayer(post parser.Post, player1, player2 PotionsUser) bool {
 	return post.Author.Username == player1.Name || post.Author.Username == player2.Name
 }
 func findPlayerAndRole(username string, player1, player2, moderator PotionsUser, others []PotionsUser) (*PotionsUser, string) {
@@ -177,8 +177,8 @@ func findPlayerAndRole(username string, player1, player2, moderator PotionsUser,
 	}
 	return nil, ""
 }
-func removeOtherPostsFromThread(player1 PotionsUser, player2 PotionsUser, moderator PotionsUser, other []PotionsUser, thread hrparse.Thread) hrparse.Thread {
-	var threadWithoutOthers hrparse.Thread
+func removeOtherPostsFromThread(player1 PotionsUser, player2 PotionsUser, moderator PotionsUser, other []PotionsUser, thread parser.Thread) parser.Thread {
+	var threadWithoutOthers parser.Thread
 	threadWithoutOthers = thread
 	threadWithoutOthers.Posts = nil
 
@@ -224,7 +224,7 @@ func printPostReport(isPlayer bool, postCount int, postUser string, role string,
 		})
 	return s
 }
-func ClubPotionsProcessor(rawThread hrparse.Thread, turnLimit int, timeLimitHours int, forumDateTime time.Time) PotionClubReport {
+func PotionGetReportFromThread(rawThread parser.Thread, turnLimit int, timeLimitHours int, forumDateTime time.Time) PotionClubReport {
 	timeThreshold := time.Duration(timeLimitHours) * time.Hour
 	potion := getPotionFromThread(rawThread)
 	player1, player2, moderator, others := identifyRolesOnThread(rawThread)

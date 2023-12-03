@@ -3,8 +3,7 @@ package endpoint
 import (
 	"encoding/json"
 	"fmt"
-	"localdev/HrHelper/internal/potion"
-	"localdev/HrHelper/internal/tool"
+	"localdev/HrHelper/internal/hogwartsforum/tool"
 	"net/http"
 )
 
@@ -25,21 +24,8 @@ func (o *Endpoints) SubforumPotionsClub(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	fmt.Println("\n\n ========= SUBFORUM CLUB DE POCIONES =========\n\n")
-	if len(*request.SubForumUrls) == 0 {
-		fmt.Println("No subforums URLs to process")
-	}
-	var reportMainList []potion.PotionClubReport
-	for _, url := range *request.SubForumUrls {
-		fmt.Println("=== Fetching Subforum === \n")
-		potionSubHtml := o.Tool.GetSubforum(url)
-		subforumThreads := o.Tool.ParseSubforum(potionSubHtml)
-		fmt.Println("=== Fetch Ended === \n")
-		reportList := o.Tool.ProcessPotionsSubforum(subforumThreads, *request.TurnLimit, *request.TimeLimit)
-		reportMainList = append(reportMainList, reportList...)
-	}
-
-	response := SubforumPotionsClubResponse{ThreadReports: reportMainList}
+	threadReports := o.Tool.ProcessPotionsSubforumList(request.SubForumUrls, request.TurnLimit, request.TimeLimit)
+	response := SubforumPotionsClubResponse{ThreadReports: threadReports}
 
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
@@ -64,19 +50,8 @@ func (o *Endpoints) ThreadsPotionsClub(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("\n\n ========= SUBFORUM CLUB DE POCIONES =========\n\n")
-	if len(*request.ThreadsUrls) == 0 {
-		fmt.Println("No Threads URLs to process")
-	}
-	var reportMainList []potion.PotionClubReport
-	for _, url := range *request.ThreadsUrls {
-		potionThreadHtml := o.Tool.GetThread(url)
-		potionThread := o.Tool.ParseThread(potionThreadHtml)
-		report := o.Tool.ProcessPotionsThread(*potionThread, *request.TurnLimit, *request.TimeLimit)
-		reportMainList = append(reportMainList, report)
-	}
-
-	response := ThreadsPotionsClubResponse{ThreadReports: reportMainList}
+	threadReports := o.Tool.ProcessPotionsThreadList(request.ThreadsUrls, request.TurnLimit, request.TimeLimit)
+	response := SubforumPotionsClubResponse{ThreadReports: threadReports}
 
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
