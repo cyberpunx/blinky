@@ -18,9 +18,11 @@ type Task struct {
 const (
 	LogTagInfo    = "Blinky!"
 	LogTagPotions = "potionsClub"
+	passphrase    = "yourEncryptionKey"
 )
 
 var config *Config
+var loadedConfigPath string
 var Reset = ""
 var Red = ""
 var Green = ""

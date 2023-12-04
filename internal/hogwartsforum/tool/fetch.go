@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"localdev/HrHelper/internal/config"
+	"localdev/HrHelper/internal/hogwartsforum/parser"
 	"localdev/HrHelper/internal/util"
 	"net/http"
 	"net/http/cookiejar"
@@ -11,7 +12,7 @@ import (
 	"strings"
 )
 
-func LoginAndGetCookies(user, pass string) *http.Client {
+func LoginAndGetCookies(user, pass string) (*http.Client, bool) {
 	fmt.Println("Logging in with User: " + config.Purple + user + " " + config.Reset)
 	params := url.Values{}
 	params.Add("username", user)
@@ -55,7 +56,18 @@ func LoginAndGetCookies(user, pass string) *http.Client {
 
 	defer resp.Body.Close()
 	util.PrintResponseStatus(resp.Status)
-	return client
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		// error handling
+	}
+
+	isLoginCorrect := parser.IsLoginCorrect(string(body))
+	if !isLoginCorrect {
+		fmt.Println(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Usuario y/o Contraseña Incorrectos ")
+		return nil, false
+	}
+
+	return client, true
 }
 
 func (o *Tool) getSubforum(subUrl string) string {

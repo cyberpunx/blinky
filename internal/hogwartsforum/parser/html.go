@@ -350,3 +350,13 @@ func IsThreadVisible(html string) bool {
 		return true
 	}
 }
+
+func IsLoginCorrect(html string) bool {
+	searchString := "<p>Has escrito un nombre de usuario incorrecto, inactivo o una contraseña inválida."
+
+	if strings.Contains(html, searchString) {
+		return false
+	} else {
+		return true
+	}
+}

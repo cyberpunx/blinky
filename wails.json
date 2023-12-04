@@ -7,7 +7,7 @@
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
   "author": {
-    "name": "Franco Magrini",
+    "name": "Franco",
     "email": "franco.mgr@gmail.com"
   }
 }

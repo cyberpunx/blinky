@@ -10,3 +10,9 @@ frontend/dist
 *conf.json
 *.exe
 /vendor/
+
+#sqlite files
+*.db
+
+#package-lock.json
+package-lock.json
