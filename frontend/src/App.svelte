@@ -1,79 +1,58 @@
- <script>
-  import logo from './assets/images/logo-universal.png'
-  import {Greet} from '../wailsjs/go/main/App.js'
+<script>
+    import tabler from 'yesvelte/css/tabler.min.css?url';
+    import Login from './lib/components/Login.svelte';
+    import Pag1 from './lib/components/Pag1.svelte';
+    import Pag2 from './lib/components/Pag2.svelte';
+    import {SidebarItem, Sidebar, El, ButtonGroup,Button, Icon} from "yesvelte";
 
-  let resultText = "Please enter your name below 👇"
-  let name
+    let isLogin = false
+    let selectedMenu = 0;
 
-  function greet() {
-    Greet(name).then(result => resultText = result)
-  }
+
 </script>
+<svelte:head>
+    <link rel='stylesheet' href={tabler}/>
+</svelte:head>
 
-<main>
-  <img alt="Wails logo" id="logo" src="{logo}">
-  <div class="result" id="result">{resultText}</div>
-  <div class="input-box" id="input">
-    <input autocomplete="off" bind:value={name} class="input" id="name" type="text"/>
-    <button class="btn" on:click={greet}>Greet</button>
-  </div>
+<main data-theme="dark" data-bs-theme="dark">
+    <El container style="overflow: hidden">
+        <El row>
+            <El col="2">
+                <Sidebar theme="dark" style="width: fit-content">
+                    {#if isLogin}
+                    <ButtonGroup col="auto">
+                        <Button>
+                            <Icon name="settings" />
+                        </Button>
+                        <Button>
+                            <Icon name="user" />
+                        </Button>
+                    </ButtonGroup>
+                    {/if}
+                    {#if !isLogin}
+                        <SidebarItem icon="login" title="Identificarse" on:click={() => (selectedMenu = 0)}/>
+                    {:else}
+                        <SidebarItem icon="file" title="Page 1" on:click={() => (selectedMenu = 1)}/>
+                        <SidebarItem icon="file" title="Page 2" on:click={() => (selectedMenu = 2)}/>
+                    {/if}
+                </Sidebar>
+            </El>
+            <El col mt="5">
+                {#if isLogin}
+                    {#if selectedMenu === 1}
+                        <Pag1 />
+                    {:else if selectedMenu === 2}
+                        <Pag2 />
+                    {:else}
+                        <h1>
+                            Page Not Found
+                        </h1>
+                    {/if}
+                {:else}
+                    <Login bind:loggedIn={isLogin} bind:redirectAfterLogin={selectedMenu}/>
+                {/if}
+            </El>
+        </El>
+    </El>
 </main>
 
-<style>
-
-  #logo {
-    display: block;
-    width: 50%;
-    height: 50%;
-    margin: auto;
-    padding: 10% 0 0;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-origin: content-box;
-  }
-
-  .result {
-    height: 20px;
-    line-height: 20px;
-    margin: 1.5rem auto;
-  }
-
-  .input-box .btn {
-    width: 60px;
-    height: 30px;
-    line-height: 30px;
-    border-radius: 3px;
-    border: none;
-    margin: 0 0 0 20px;
-    padding: 0 8px;
-    cursor: pointer;
-  }
-
-  .input-box .btn:hover {
-    background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
-    color: #333333;
-  }
-
-  .input-box .input {
-    border: none;
-    border-radius: 3px;
-    outline: none;
-    height: 30px;
-    line-height: 30px;
-    padding: 0 10px;
-    background-color: rgba(240, 240, 240, 1);
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .input-box .input:hover {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
-  }
-
-  .input-box .input:focus {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
-  }
-
-</style>

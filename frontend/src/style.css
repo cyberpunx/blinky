@@ -6,7 +6,7 @@ html {
 
 body {
     margin: 0;
-    color: white;
+    color: var(--ds-color8) !important;
     font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
     "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
@@ -23,4 +23,38 @@ body {
 #app {
     height: 100vh;
     text-align: center;
+    background-color: rgba(49, 51, 56, 1);
+}
+
+:root {
+    --ds-color-primary: #7289da;
+    --ds-color1: #040405;
+    --ds-color2: #18191c;
+    --ds-color3: #202225;
+    --ds-color4: #36393f;
+    --ds-color5: #4f545c;
+    --ds-color6: #72767d;
+    --ds-color7: #b9bbbe;
+    --ds-color8: #dcddde;
+    --ds-color9: #f6f6f7;
+
+    --gryffindor-color: #823B3B;
+    --slytherin-color: #527A52;
+    --ravenclaw-color: #436594;
+    --hufflepuff-color: #D1C76B;
+    --witch-color: #907791;
+    --wizard-color: #615B73;
+    --staff-color: #E1A673;
+    --mod-color: #468392;
+    --hr-color: #917849;
+}
+
+[data-bs-theme=dark], [data-theme=dark] {
+    --y-body-color: var(--ds-color9) !important;
+    --y-bg-surface: var(--ds-color3) !important;
+
+    --y-border-color: var(--ds-color3) !important;
+    --y-bg-forms: var(--ds-color2)  !important;
+    --y-border-color-translucent: var(--ds-color3) !important;
+    --y-heading-color: var(--ds-color9) !important;
 }
