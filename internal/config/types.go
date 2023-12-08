@@ -3,6 +3,7 @@ package config
 type Config struct {
 	Username      *string `json:"username" meta-obscure:"default"`
 	Password      *string `json:"password" meta-obscure:"default"`
+	Remember      *bool   `json:"remember" meta-obscure:"default"`
 	BaseUrl       *string `json:"baseUrl" meta-obscure:"default"`
 	UnicodeOutput *bool   `json:"unicodeOutput" meta-obscure:"default"`
 	Tasks         []*Task `json:"tasks" meta-obscure:"default"`

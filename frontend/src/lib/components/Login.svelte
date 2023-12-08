@@ -1,6 +1,8 @@
 <script>
     import {Login} from '../../../wailsjs/go/main/App'
+    import {GetConfig} from '../../../wailsjs/go/main/App'
     import tabler from 'yesvelte/css/tabler.min.css?url'
+    import { onMount } from 'svelte';
     import {
         El,
         Button,
@@ -9,15 +11,18 @@
         Input,
         FormField,
         Label,
-        Alert
+        Alert,
+        Checkbox
     } from 'yesvelte'
 
     let user, pass
     let error = false
+    let rememberMe = false
+    let config = {}
     export let loggedIn = false
-    export const redirectAfterLogin = 1
+    export const redirectAfterLogin = "pag1"
     function doLogin(){
-        Login(user, pass).then((result) => {
+        Login(user, pass, rememberMe).then((result) => {
             if(result){
                 loggedIn = true
             }else{
@@ -26,6 +31,18 @@
             }
         })
     }
+
+    onMount(() => {
+        GetConfig().then((result) => {
+            config = result
+            console.log(config)
+            if (result["remember"]){
+                rememberMe = true
+                user = result["username"]
+                pass = result["password"]
+            }
+        })
+    });
 
 </script>
 <svelte:head>
@@ -59,6 +76,10 @@
                         </El>
                         <Input type="password" placeholder="Tu Contraseña" bind:value={pass}>
                         </Input>
+                    </FormField>
+                    <FormField mt="3">
+                        <Checkbox bind:checked={rememberMe}>Recordarme
+                        </Checkbox>
                     </FormField>
                     <Button mt="3" col="12" color="primary" on:click={doLogin}>Ingresar</Button>
                 </CardBody>

@@ -3,10 +3,11 @@
     import Login from './lib/components/Login.svelte';
     import Pag1 from './lib/components/Pag1.svelte';
     import Pag2 from './lib/components/Pag2.svelte';
+    import Settings from './lib/components/Settings.svelte';
     import {SidebarItem, Sidebar, El, ButtonGroup,Button, Icon} from "yesvelte";
 
     let isLogin = false
-    let selectedMenu = 0;
+    let selectedMenu = "login";
 
 
 </script>
@@ -22,7 +23,7 @@
                     {#if isLogin}
                     <ButtonGroup col="auto">
                         <Button>
-                            <Icon name="settings" />
+                            <Icon name="settings" on:click={() => (selectedMenu = "settings")}/>
                         </Button>
                         <Button>
                             <Icon name="user" />
@@ -30,19 +31,21 @@
                     </ButtonGroup>
                     {/if}
                     {#if !isLogin}
-                        <SidebarItem icon="login" title="Identificarse" on:click={() => (selectedMenu = 0)}/>
+                        <SidebarItem icon="login" title="Identificarse" on:click={() => (selectedMenu = "login")}/>
                     {:else}
-                        <SidebarItem icon="file" title="Page 1" on:click={() => (selectedMenu = 1)}/>
-                        <SidebarItem icon="file" title="Page 2" on:click={() => (selectedMenu = 2)}/>
+                        <SidebarItem icon="file" title="Page 1" on:click={() => (selectedMenu = "pag1")}/>
+                        <SidebarItem icon="file" title="Page 2" on:click={() => (selectedMenu = "pag2")}/>
                     {/if}
                 </Sidebar>
             </El>
             <El col mt="5">
                 {#if isLogin}
-                    {#if selectedMenu === 1}
+                    {#if selectedMenu === "pag1"}
                         <Pag1 />
-                    {:else if selectedMenu === 2}
+                    {:else if selectedMenu === "pag2"}
                         <Pag2 />
+                    {:else if selectedMenu === "settings"}
+                        <Settings />
                     {:else}
                         <h1>
                             Page Not Found

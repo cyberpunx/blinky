@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-func LoadConfig(configPath string, config interface{}) string {
+func LoadConfigFile(configPath string, config interface{}) string {
 	executablePath, err := os.Executable()
 	parentPath := filepath.Dir(executablePath)
 	//abs, err := filepath.Abs(path)
@@ -29,27 +29,7 @@ func LoadConfig(configPath string, config interface{}) string {
 	return loadedPath
 }
 
-func GetConfig() *Config {
-	username := ""
-	password := ""
-	baseUrl := "https://www.hogwartsrol.com/"
-	unicodeOuput := true
-	conf := Config{
-		Username:      &username,
-		Password:      &password,
-		BaseUrl:       &baseUrl,
-		UnicodeOutput: &unicodeOuput,
-		Tasks:         nil,
-	}
-	return &conf
-}
-
-func init() {
-	//conf := flag.String("conf", "conf.json", "Config")
-	//LoadConfig(*conf, &config)
-
-	config := GetConfig()
-
+func InitUnicodeConfig(config *Config) {
 	if *config.UnicodeOutput {
 		Reset = "\033[0m"
 		Red = "\033[31m"

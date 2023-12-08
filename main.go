@@ -6,6 +6,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
+	"localdev/HrHelper/internal/config"
+	"localdev/HrHelper/internal/storage"
 )
 
 //go:embed all:frontend/dist
@@ -34,7 +36,14 @@ func main() {
 
 	*/
 	// Create an instance of the app structure
-	app := NewApp()
+
+	db := storage.InitDB()
+	defer db.Close()
+
+	conf := storage.GetConfig(db)
+	config.InitUnicodeConfig(conf)
+
+	app := NewApp(db)
 
 	// Create application with options
 	err2 := wails.Run(&options.App{
