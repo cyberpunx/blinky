@@ -61,3 +61,7 @@ func (a *App) Login(user, pass string, remeber bool) *tool.LoginResponse {
 func (a *App) GetConfig() *config.Config {
 	return a.tool.Config
 }
+
+func (a *App) GetTool() *tool.Tool {
+	return a.tool
+}

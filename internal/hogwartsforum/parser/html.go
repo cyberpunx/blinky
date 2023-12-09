@@ -372,7 +372,6 @@ func GetUsername(html string) string {
 	}
 
 	usernameLine := doc.Find("a.mainmenu").Last().Text()
-	//usernameLine is something like: "Bienvenido, [ username ]", take the username
 	username := strings.Split(usernameLine, "[")[1]
 	username = strings.Split(username, "]")[0]
 	username = strings.TrimSpace(username)

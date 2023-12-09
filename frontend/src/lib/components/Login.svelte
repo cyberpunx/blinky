@@ -2,6 +2,7 @@
     import {MENU} from '../constants.js';
     import {Login} from '../../../wailsjs/go/main/App'
     import {GetConfig} from '../../../wailsjs/go/main/App'
+    import {GetTool} from '../../../wailsjs/go/main/App'
     import tabler from 'yesvelte/css/tabler.min.css?url'
     import { onMount } from 'svelte';
     import {
@@ -20,9 +21,10 @@
     let error = false
     let message = ""
     let rememberMe = false
-    let config = {}
+    export let config = {}
+    export let tool = {}
     export let loggedIn = false
-    export const redirectAfterLogin = MENU.PAG1
+    export const redirectAfterLogin = MENU.HOME
     export let username = ""
     export let initials = ""
     function doLogin(){
@@ -48,6 +50,12 @@
                 pass = result["password"]
             }
         })
+
+
+        GetTool().then((result) => {
+            tool = result
+            console.log(tool)
+        })
     });
 
 </script>
@@ -61,7 +69,6 @@
     <El row>
         <El col></El>
         <El col>
-
             <Card size="md">
                 <CardBody>
                     {#if error}

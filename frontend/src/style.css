@@ -57,4 +57,6 @@ body {
     --y-bg-forms: var(--ds-color2)  !important;
     --y-border-color-translucent: var(--ds-color3) !important;
     --y-heading-color: var(--ds-color9) !important;
+
+    --y-bg-surface-tertiary: var(--ds-color4) !important;
 }

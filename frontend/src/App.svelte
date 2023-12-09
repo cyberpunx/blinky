@@ -4,8 +4,8 @@
 
     import {MENU} from './lib/constants';
     import Login from './lib/components/Login.svelte';
-    import Pag1 from './lib/components/Pag1.svelte';
-    import Pag2 from './lib/components/Pag2.svelte';
+    import Pag1 from './lib/components/Home.svelte';
+    import Pag2 from './lib/components/Potions.svelte';
     import Settings from './lib/components/Settings.svelte';
     import TopNavBar from './lib/components/TopNavBar.svelte';
     import Footer from './lib/components/Footer.svelte';
@@ -14,6 +14,8 @@
     let selectedMenu = "login";
     let username = "";
     let initials = "";
+    let config = {}
+    let tool = {}
 
 
 </script>
@@ -26,9 +28,9 @@
 
     <El p="3">
     {#if isLogin}
-        {#if selectedMenu === MENU.PAG1}
+        {#if selectedMenu === MENU.HOME}
             <Pag1 />
-        {:else if selectedMenu === MENU.PAG2}
+        {:else if selectedMenu === MENU.POTIONS}
             <Pag2 />
         {:else if selectedMenu === MENU.SETTINGS}
             <Settings />
@@ -38,11 +40,12 @@
             </h1>
         {/if}
     {:else}
-        <Login bind:loggedIn={isLogin} bind:redirectAfterLogin={selectedMenu} bind:username={username} bind:initials={initials}/>
+        <Login bind:tool={tool} bind:config={config} bind:loggedIn={isLogin}
+               bind:redirectAfterLogin={selectedMenu} bind:username={username} bind:initials={initials}/>
     {/if}
     </El>
 
-<Footer />
+    <Footer />
 </main>
 
 <style>

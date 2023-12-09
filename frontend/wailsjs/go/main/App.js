@@ -6,6 +6,10 @@ export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
 
+export function GetTool() {
+  return window['go']['main']['App']['GetTool']();
+}
+
 export function Login(arg1, arg2, arg3) {
   return window['go']['main']['App']['Login'](arg1, arg2, arg3);
 }

@@ -5,4 +5,6 @@ import {tool} from '../models';
 
 export function GetConfig():Promise<config.Config>;
 
+export function GetTool():Promise<tool.Tool>;
+
 export function Login(arg1:string,arg2:string,arg3:boolean):Promise<tool.LoginResponse>;

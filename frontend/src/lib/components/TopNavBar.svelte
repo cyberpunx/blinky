@@ -16,12 +16,13 @@
 </script>
 
 {#if isLogin}
-<El row alignItems="center" justifyContent="between" style="margin-left: 0; margin-right: 0">
+<El row alignItems="center" justifyContent="between" alignSelf="center" style="margin-left: 0; margin-right: 0">
     <Navbar col="12" colSm="1" style="width: fit-content;">
         <NavbarItem icon="menu-2">
-            <NavbarItem title="Pag1" on:click={() => handleMenuChange(MENU.PAG1)} />
-            <NavbarItem title="Pag2" on:click={() => handleMenuChange(MENU.PAG2)} />
-            <NavbarItem title="SETTINGS" on:click={() => handleMenuChange(MENU.SETTINGS)} />
+            <NavbarItem icon="home" title="Inicio" on:click={() => handleMenuChange(MENU.HOME)} />
+            <NavbarItem icon="flask-2-filled" title="Pociones" on:click={() => handleMenuChange(MENU.POTIONS)} />
+            <DropdownItem divider />
+            <NavbarItem icon="settings" title="Config" on:click={() => handleMenuChange(MENU.SETTINGS)} />
         </NavbarItem>
     </Navbar>
 
