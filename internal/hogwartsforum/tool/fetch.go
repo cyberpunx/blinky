@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func LoginAndGetCookies(user, pass string) (*http.Client, bool) {
+func LoginAndGetCookies(user, pass string) (*http.Client, *LoginResponse) {
 	fmt.Println("Logging in with User: " + config.Purple + user + " " + config.Reset)
 	params := url.Values{}
 	params.Add("username", user)
@@ -61,13 +61,29 @@ func LoginAndGetCookies(user, pass string) (*http.Client, bool) {
 		// error handling
 	}
 
-	isLoginCorrect := parser.IsLoginCorrect(string(body))
+	var loginResponse LoginResponse
+	isLoginCorrect, msg := parser.IsLoginCorrect(string(body))
 	if !isLoginCorrect {
 		fmt.Println(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Usuario y/o Contraseña Incorrectos ")
-		return nil, false
+		loginResponse = LoginResponse{
+			Success:  util.PBool(false),
+			Messaage: &msg,
+			Username: nil,
+			Initials: nil,
+		}
+		return nil, &loginResponse
+	}
+	username := parser.GetUsername(string(body))
+	fmt.Println("Bienvenido: " + config.Green + username + config.Reset)
+	initials := util.GetInitials(username)
+	loginResponse = LoginResponse{
+		Success:  util.PBool(true),
+		Messaage: &msg,
+		Username: &username,
+		Initials: &initials,
 	}
 
-	return client, true
+	return client, &loginResponse
 }
 
 func (o *Tool) getSubforum(subUrl string) string {

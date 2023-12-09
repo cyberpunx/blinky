@@ -9,6 +9,7 @@ import (
 type Endpoints struct {
 	Tool *tool.Tool
 }
+
 type SubforumPotionsClubRequest struct {
 	SubForumUrls *[]string `json:"subforumUrls"`
 	TimeLimit    *int      `json:"timeLimit"`

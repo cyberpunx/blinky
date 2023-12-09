@@ -32,14 +32,15 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
-func (a *App) Login(user, pass string, remeber bool) bool {
+func (a *App) Login(user, pass string, remeber bool) *tool.LoginResponse {
 	config := storage.GetConfig(a.db)
 
-	client, isLoggedIn := tool.LoginAndGetCookies(user, pass)
+	client, loginResponse := tool.LoginAndGetCookies(user, pass)
 	a.tool.Client = client
-	if !isLoggedIn {
+
+	if !*loginResponse.Success {
 		fmt.Println("Not logged in. Exiting...")
-		return false
+		return loginResponse
 	}
 
 	if remeber {
@@ -48,14 +49,13 @@ func (a *App) Login(user, pass string, remeber bool) bool {
 	} else {
 		config.Username = nil
 		config.Password = nil
-
 	}
 	config.Remember = &remeber
 	storage.UpdateConfig(a.db, config)
 
 	hrTool := tool.NewTool(config, client)
 	a.tool = hrTool
-	return true
+	return loginResponse
 }
 
 func (a *App) GetConfig() *config.Config {

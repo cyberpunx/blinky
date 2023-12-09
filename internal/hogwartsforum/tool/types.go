@@ -7,6 +7,18 @@ import (
 	"time"
 )
 
+type LoginRequest struct {
+	User *string `json:"user"`
+	Pass *string `json:"pass"`
+}
+
+type LoginResponse struct {
+	Success  *bool   `json:"success"`
+	Messaage *string `json:"message"`
+	Username *string `json:"username"`
+	Initials *string `json:"initials"`
+}
+
 type Tool struct {
 	Config        *config.Config
 	Client        *http.Client

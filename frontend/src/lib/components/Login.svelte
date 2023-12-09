@@ -1,4 +1,5 @@
 <script>
+    import {MENU} from '../constants.js';
     import {Login} from '../../../wailsjs/go/main/App'
     import {GetConfig} from '../../../wailsjs/go/main/App'
     import tabler from 'yesvelte/css/tabler.min.css?url'
@@ -17,16 +18,21 @@
 
     let user, pass
     let error = false
+    let message = ""
     let rememberMe = false
     let config = {}
     export let loggedIn = false
-    export const redirectAfterLogin = "pag1"
+    export const redirectAfterLogin = MENU.PAG1
+    export let username = ""
+    export let initials = ""
     function doLogin(){
         Login(user, pass, rememberMe).then((result) => {
-            if(result){
-                loggedIn = true
-            }else{
-                loggedIn = false
+            console.log(result)
+            loggedIn = result["success"]
+            message = result["message"]
+            username = result["username"]
+            initials = result["initials"]
+            if(!loggedIn) {
                 error = true
             }
         })
@@ -60,7 +66,7 @@
                 <CardBody>
                     {#if error}
                         <Alert important icon="alert-circle" color="danger">
-                            Credenciales inválidas.
+                            {message}
                         </Alert>
                     {/if}
                     <El tag="h1">Iniciar Sesión</El>
@@ -90,6 +96,3 @@
     </El>
     <El row></El>
 </El>
-
-
-Texto

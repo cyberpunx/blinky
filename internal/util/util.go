@@ -10,6 +10,19 @@ import (
 	"time"
 )
 
+func GetInitials(name string) string {
+	words := strings.Fields(name)
+	var initials string
+
+	if len(words) == 1 {
+		initials = string(words[0][0]) + string(words[0][1])
+	} else {
+		initials = string(words[0][0]) + string(words[1][0])
+	}
+
+	return strings.ToUpper(initials)
+}
+
 func PrintResponseStatus(status string) {
 	statusColor := ""
 	statusEmoji := ""
@@ -31,6 +44,10 @@ func Panic(err error) {
 
 func PStr(s string) *string {
 	return &s
+}
+
+func PBool(b bool) *bool {
+	return &b
 }
 
 type P map[string]interface{}

@@ -351,12 +351,31 @@ func IsThreadVisible(html string) bool {
 	}
 }
 
-func IsLoginCorrect(html string) bool {
+func IsLoginCorrect(html string) (bool, string) {
 	searchString := "<p>Has escrito un nombre de usuario incorrecto, inactivo o una contraseña inválida."
+	searchString2 := "<p>El número máximo de 10 intentos de conexiones autorizadas ha sido superado."
 
 	if strings.Contains(html, searchString) {
-		return false
+		return false, "Has escrito un nombre de usuario incorrecto, inactivo o una contraseña inválida."
+	} else if strings.Contains(html, searchString2) {
+		return false, "El número máximo de 10 intentos de conexiones autorizadas ha sido superado."
 	} else {
-		return true
+		return true, "Inicio de sesión correcto."
 	}
+}
+
+func GetUsername(html string) string {
+	reader := strings.NewReader(html)
+	doc, err := goquery.NewDocumentFromReader(reader)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	usernameLine := doc.Find("a.mainmenu").Last().Text()
+	//usernameLine is something like: "Bienvenido, [ username ]", take the username
+	username := strings.Split(usernameLine, "[")[1]
+	username = strings.Split(username, "]")[0]
+	username = strings.TrimSpace(username)
+	return username
+
 }
