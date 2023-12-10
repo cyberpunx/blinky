@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"localdev/HrHelper/internal/config"
+	"localdev/HrHelper/internal/endpoint"
 	"localdev/HrHelper/internal/hogwartsforum/tool"
 	"localdev/HrHelper/internal/storage"
 )
@@ -58,10 +59,32 @@ func (a *App) Login(user, pass string, remeber bool) *tool.LoginResponse {
 	return loginResponse
 }
 
+func (a *App) SubforumPotionsClub(subforumUrls []string, timeLimit, turnLimit int) *endpoint.SubforumPotionsClubResponse {
+	report := a.tool.ProcessPotionsSubforumList(&subforumUrls, &timeLimit, &turnLimit)
+	response := endpoint.SubforumPotionsClubResponse{ThreadReports: report}
+	return &response
+}
+
 func (a *App) GetConfig() *config.Config {
 	return a.tool.Config
 }
 
 func (a *App) GetTool() *tool.Tool {
 	return a.tool
+}
+
+func (a *App) GetPotionSubforum() *[]config.PotionSubforumConfig {
+	return storage.GetPotionSubforum(a.db)
+}
+
+func (a *App) UpdatePotionSubforum(potionSubConfig *[]config.PotionSubforumConfig) {
+	storage.UpdatePotionSubforum(a.db, potionSubConfig)
+}
+
+func (a *App) GetPotionThread() *[]config.PotionThreadConfig {
+	return storage.GetPotionThread(a.db)
+}
+
+func (a *App) UpdatePotionThread(potionThrConfig *[]config.PotionThreadConfig) {
+	storage.UpdatePotionThread(a.db, potionThrConfig)
 }

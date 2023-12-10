@@ -16,6 +16,18 @@ type Task struct {
 	TurnLimit *int      `json:"turnLimit" meta-obscure:"default"`
 }
 
+type PotionSubforumConfig struct {
+	Url       *string `json:"url" meta-obscure:"default"`
+	TimeLimit *int    `json:"timeLimit" meta-obscure:"default"`
+	TurnLimit *int    `json:"turnLimit" meta-obscure:"default"`
+}
+
+type PotionThreadConfig struct {
+	Url       *string `json:"url" meta-obscure:"default"`
+	TimeLimit *int    `json:"timeLimit" meta-obscure:"default"`
+	TurnLimit *int    `json:"turnLimit" meta-obscure:"default"`
+}
+
 const (
 	LogTagInfo    = "Blinky!"
 	LogTagPotions = "potionsClub"

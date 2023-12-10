@@ -4,8 +4,8 @@
 
     import {MENU} from './lib/constants';
     import Login from './lib/components/Login.svelte';
-    import Pag1 from './lib/components/Home.svelte';
-    import Pag2 from './lib/components/Potions.svelte';
+    import Home from './lib/components/Home.svelte';
+    import Potions from './lib/components/Potions.svelte';
     import Settings from './lib/components/Settings.svelte';
     import TopNavBar from './lib/components/TopNavBar.svelte';
     import Footer from './lib/components/Footer.svelte';
@@ -14,8 +14,8 @@
     let selectedMenu = "login";
     let username = "";
     let initials = "";
-    let config = {}
-    let tool = {}
+    let config
+    let tool
 
 
 </script>
@@ -29,11 +29,11 @@
     <El p="3">
     {#if isLogin}
         {#if selectedMenu === MENU.HOME}
-            <Pag1 />
+            <Home />
         {:else if selectedMenu === MENU.POTIONS}
-            <Pag2 />
+            <Potions {config} {tool} />
         {:else if selectedMenu === MENU.SETTINGS}
-            <Settings />
+            <Settings {config} {tool} />
         {:else}
             <h1>
                 Page Not Found

@@ -57,10 +57,26 @@ func InitDB() *sql.DB {
 		util.Panic(err)
 	}
 
+	createPotionSubTableSQL := `CREATE TABLE IF NOT EXISTS PotionSubforum (
+        "url" TEXT PRIMARY KEY,
+        "timeLimit" INTEGER NOT NULL,
+        "turnLimit" INTEGER NOT NULL
+    );`
+	_, err = db.Exec(createPotionSubTableSQL)
+	util.Panic(err)
+
+	createPotionThrTableSQL := `CREATE TABLE IF NOT EXISTS PotionThreadConfig (
+        "url" TEXT PRIMARY KEY,
+        "timeLimit" INTEGER NOT NULL,
+        "turnLimit" INTEGER NOT NULL
+    );`
+	_, err = db.Exec(createPotionThrTableSQL)
+	util.Panic(err)
+
 	return db
 }
 func GetConfig(db *sql.DB) *config.Config {
-	query := `SELECT username, password, remember, baseUrl, unicodeOutput FROM Config LIMIT 1;`
+	query := `SELECT * FROM Config LIMIT 1;`
 
 	var config config.Config
 
@@ -83,4 +99,70 @@ func UpdateConfig(db *sql.DB, config *config.Config) {
 	updateSQL := `UPDATE Config SET username = ?, password = ?, remember = ?,baseUrl = ?, unicodeOutput = ?;`
 	_, err = db.Exec(updateSQL, config.Username, config.Password, config.Remember, config.BaseUrl, config.UnicodeOutput)
 	util.Panic(err)
+}
+
+func GetPotionSubforum(db *sql.DB) *[]config.PotionSubforumConfig {
+	query := `SELECT * FROM PotionSubforum;`
+
+	var potionSubConfig []config.PotionSubforumConfig
+
+	rows, err := db.Query(query)
+	util.Panic(err)
+
+	//loop all rows
+	for rows.Next() {
+		var potionSubforum config.PotionSubforumConfig
+		err := rows.Scan(&potionSubforum.Url, &potionSubforum.TimeLimit, &potionSubforum.TurnLimit)
+		util.Panic(err)
+		potionSubConfig = append(potionSubConfig, potionSubforum)
+	}
+	return &potionSubConfig
+}
+
+func UpdatePotionSubforum(db *sql.DB, potionSubConfig *[]config.PotionSubforumConfig) {
+	// Truncate the table and insert the new values
+	truncateSQL := `DELETE FROM PotionSubforum;`
+	_, err := db.Exec(truncateSQL)
+	util.Panic(err)
+
+	//insert one by one the potionSubConfig
+	for _, potionSubforum := range *potionSubConfig {
+		insertSQL := `INSERT INTO PotionSubforum (url, timeLimit, turnLimit)
+					SELECT ?, ?, ?;`
+		_, err := db.Exec(insertSQL, potionSubforum.Url, potionSubforum.TimeLimit, potionSubforum.TurnLimit)
+		util.Panic(err)
+	}
+}
+
+func GetPotionThread(db *sql.DB) *[]config.PotionThreadConfig {
+	query := `SELECT * FROM PotionThreadConfig;`
+
+	var potionThrConfig []config.PotionThreadConfig
+
+	rows, err := db.Query(query)
+	util.Panic(err)
+
+	//loop all rows
+	for rows.Next() {
+		var potionThread config.PotionThreadConfig
+		err := rows.Scan(&potionThread.Url, &potionThread.TimeLimit, &potionThread.TurnLimit)
+		util.Panic(err)
+		potionThrConfig = append(potionThrConfig, potionThread)
+	}
+	return &potionThrConfig
+}
+
+func UpdatePotionThread(db *sql.DB, potionThrConfig *[]config.PotionThreadConfig) {
+	// Truncate the table and insert the new values
+	truncateSQL := `DELETE FROM PotionThreadConfig;`
+	_, err := db.Exec(truncateSQL)
+	util.Panic(err)
+
+	//insert one by one the potionThrConfig
+	for _, potionThread := range *potionThrConfig {
+		insertSQL := `INSERT INTO PotionThreadConfig (url, timeLimit, turnLimit)
+					SELECT ?, ?, ?;`
+		_, err := db.Exec(insertSQL, potionThread.Url, potionThread.TimeLimit, potionThread.TurnLimit)
+		util.Panic(err)
+	}
 }

@@ -94,6 +94,7 @@ func getPotionFromThread(thread parser.Thread) *Potion {
 			//Potion Name
 			name = liSelection.Text()
 			name = strings.Split(name, ":")[1]
+			name = strings.TrimSpace(name)
 		} else if i == 1 {
 			//Potion TurnLimit
 			turnLimit = liSelection.Text()
@@ -224,7 +225,7 @@ func printPostReport(isPlayer bool, postCount int, postUser string, role string,
 		})
 	return s
 }
-func PotionGetReportFromThread(rawThread parser.Thread, turnLimit int, timeLimitHours int, forumDateTime time.Time) PotionClubReport {
+func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimit int, forumDateTime time.Time) PotionClubReport {
 	timeThreshold := time.Duration(timeLimitHours) * time.Hour
 	potion := getPotionFromThread(rawThread)
 	player1, player2, moderator, others := identifyRolesOnThread(rawThread)
@@ -327,6 +328,13 @@ func PotionGetReportFromThread(rawThread parser.Thread, turnLimit int, timeLimit
 			playerPostCount[player1.Name] = 0
 			playerPostCount[player2.Name] = 0
 			turnCount++
+		}
+	}
+
+	//if at least 1 turn is out of time, the potion is a fail
+	for _, turn := range result.Turns {
+		if !turn.OnTime {
+			result.Status = StatusFail
 		}
 	}
 

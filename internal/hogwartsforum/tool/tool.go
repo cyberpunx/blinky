@@ -101,12 +101,12 @@ func (o *Tool) parsePost(postHtml string) *parser.Post {
 	}
 }
 
-func (o *Tool) processPotionsSubforum(subforumThreads []*parser.Thread, turnLimit int, timeLimit int) []potion.PotionClubReport {
+func (o *Tool) processPotionsSubforum(subforumThreads []*parser.Thread, timeLimit, turnLimit int) []potion.PotionClubReport {
 	fmt.Println("=== Potions Begin ===")
 	var reportList []potion.PotionClubReport
 	for threadIndex, thread := range subforumThreads {
 		fmt.Println("Processing Thread: " + conf.Purple + strconv.Itoa(threadIndex+1) + "/" + strconv.Itoa(len(subforumThreads)) + conf.Reset)
-		report := o.processPotionsThread(*thread, turnLimit, timeLimit)
+		report := o.processPotionsThread(*thread, timeLimit, turnLimit)
 		reportList = append(reportList, report)
 		fmt.Println("\n")
 	}
@@ -114,11 +114,11 @@ func (o *Tool) processPotionsSubforum(subforumThreads []*parser.Thread, turnLimi
 	return reportList
 }
 
-func (o *Tool) processPotionsThread(thread parser.Thread, turnLimit int, timeLimit int) potion.PotionClubReport {
+func (o *Tool) processPotionsThread(thread parser.Thread, timeLimit, turnLimit int) potion.PotionClubReport {
 	fmt.Println("=== Potion Thread Begin ===")
-	fmt.Println("Thread: " + conf.Purple + thread.Title + conf.Reset)
+	fmt.Println("Thread: " + conf.Purple + thread.Title + conf.Reset + " (Time: " + strconv.Itoa(timeLimit) + "| Turn: " + strconv.Itoa(turnLimit) + ")" + "\n")
 	var report potion.PotionClubReport
-	report = potion.PotionGetReportFromThread(thread, turnLimit, timeLimit, o.ForumDateTime)
+	report = potion.PotionGetReportFromThread(thread, timeLimit, turnLimit, o.ForumDateTime)
 	fmt.Println("\n")
 	fmt.Println("=== Potion Thread End === \n")
 	return report
@@ -166,7 +166,6 @@ func (o *Tool) processChronoMainThread(chronoMainThread parser.Thread, hrTool *T
 	chronoReport := chronology.ChronoReport{
 		ChronoThreads: chronoThreads,
 	}
-	//fmt.Printf("%s\n", util.MarshalJsonPretty(chronoReport))
 
 	stringContents := fmt.Sprintf("%s\n", util.MarshalJsonPretty(chronoReport))
 	filename := "output.json"
@@ -190,6 +189,8 @@ func (o *Tool) processChronoMainThread(chronoMainThread parser.Thread, hrTool *T
 
 func (o *Tool) ProcessPotionsSubforumList(subForumUrls *[]string, timeLimit, turnLimit *int) []potion.PotionClubReport {
 	fmt.Println("\n\n ========= SUBFORUM CLUB DE POCIONES =========\n\n")
+	fmt.Println("Time Limit: " + conf.Purple + strconv.Itoa(*timeLimit) + conf.Reset)
+	fmt.Println("Turn Limit: " + conf.Purple + strconv.Itoa(*turnLimit) + conf.Reset)
 	if len(*subForumUrls) == 0 {
 		fmt.Println("No subforums URLs to process")
 	}
