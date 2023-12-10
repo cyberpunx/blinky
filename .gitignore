@@ -16,3 +16,5 @@ frontend/dist
 
 #package-lock.json
 package-lock.json
+
+client_secret.json
