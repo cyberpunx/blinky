@@ -1,16 +1,30 @@
 <script>
-    import {Card, CardBody, El, FormAutocomplete,FormInput, Input, Button, Autocomplete } from 'yesvelte'
+    import {Card, CardBody, El, FormAutocomplete,FormInput, Input, Button, Autocomplete, Alert } from 'yesvelte'
     import {GetPotionSubforum, UpdatePotionSubforum, GetPotionThread, UpdatePotionThread, UpdateSheetConfig, GetConfig} from "../../../wailsjs/go/main/App.js";
     import {onMount} from "svelte";
     import {MENU} from "../constants.js";
 
     export let config;
     export let tool;
-    export let redirectAfterSave = MENU.SETTINGS
+
     let baseUrl = config["baseUrl"]
 
     onMount(() => {
+        loadData();
+    });
+
+    function loadData(){
+        GetConfig().then((result) => {
+            config = result;
+            baseUrl = config["baseUrl"]
+            credentialsFile = config["gSheetCredFile"];
+            tokenFile = config["gSheetTokenFile"]
+            sheetId = config["gSheetId"]
+        })
+
         GetPotionSubforum().then((result) => {
+            valuePotionSub = [];
+            itemsPotionSub = [];
             result.forEach((item) => {
                 valuePotionSub = [...valuePotionSub, item.url];
                 itemsPotionSub = [...itemsPotionSub, item.url];
@@ -20,6 +34,8 @@
         })
 
         GetPotionThread().then((result) => {
+            valuePotionThr = [];
+            itemsPotionThr = [];
             result.forEach((item) => {
                 valuePotionThr = [...valuePotionThr, item.url];
                 itemsPotionThr = [...itemsPotionThr, item.url];
@@ -27,10 +43,9 @@
             timeLimitPotionThr = result[0].timeLimit;
             turnLimitPotionThr = result[0].turnLimit;
         })
-
-        config = GetConfig();
-
-    });
+    }
+    let saveConfirmation = '';
+    let open = false;
 
     let credentialsFile = config["gSheetCredFile"];
     let tokenFile = config["gSheetTokenFile"]
@@ -52,9 +67,10 @@
         }
         detail = detail.split("#")[0];
         detail = detail.split("?")[0];
-        console.log("onCreatedPotionSub");
-        valuePotionSub = [...valuePotionSub, detail];
-        itemsPotionSub = [...itemsPotionSub, detail];
+        if (!valuePotionSub.includes(detail)) {
+            valuePotionSub = [...valuePotionSub, detail];
+            itemsPotionSub = [...itemsPotionSub, detail];
+        }
     }
 
     function onCreatedPotionThr({ detail }) {
@@ -63,9 +79,10 @@
         }
         detail = detail.split("#")[0];
         detail = detail.split("?")[0];
-        console.log("onCreatedPotionThr");
-        valuePotionThr = [...valuePotionThr, detail];
-        itemsPotionThr = [...itemsPotionThr, detail];
+        if (!valuePotionThr.includes(detail)) {
+            valuePotionThr = [...valuePotionThr, detail];
+            itemsPotionThr = [...itemsPotionThr, detail];
+        }
     }
 
     function doUpdatePotionSubforum() {
@@ -78,11 +95,9 @@
         });
 
         UpdatePotionSubforum(valuePotionSubMap).then((result) => {
+            loadData();
         })
 
-        redirectAfterSave = MENU.HOME
-        config = GetConfig();
-        RestartSettings();
     }
 
     function doUpdatePotionThread() {
@@ -95,65 +110,78 @@
         });
 
         UpdatePotionThread(valuePotionThrMap).then((result) => {
+            loadData();
         })
-        redirectAfterSave = MENU.HOME
-        config = GetConfig();
-        RestartSettings();
     }
 
     function doUpdateSheetConfig() {
         UpdateSheetConfig(tokenFile, credentialsFile, sheetId).then((result) => {
+            loadData();
         })
-        redirectAfterSave = MENU.HOME
-        config = GetConfig();
-        RestartSettings();
+    }
+
+    function saveChanges(){
+        doUpdateSheetConfig();
+        doUpdatePotionSubforum();
+        doUpdatePotionThread();
+        showSaveConfirmation('Cambios guardados correctamente');
+    }
+
+    function showSaveConfirmation(message) {
+        saveConfirmation = message;
+        open = true;
+        setTimeout(() => {
+            saveConfirmation = '';
+            open = false;
+        }, 3000);
     }
 
 </script>
 
 <El>
-    <El tag="h1" textAlign="start">Configuración</El>
-    <El tag="hr" />
     <El row>
-        <El col="12" colSm="6">
+        <El col="12" colSm="2" textAlign="start"><El tag="h1">Configuración</El></El>
+        <El col="12" colSm="8">
+            <Alert dismissible important bind:open icon="info-circle" color="info">
+                {saveConfirmation}
+            </Alert>
+        </El>
+        <El col="12" colSm="2" textAlign="end"><Button color="success" on:click={saveChanges}>Guardar cambios</Button></El>
+    </El>
+
+    <El tag="hr" mt="2" mb="2"/>
+
+    <El row rowCols="3">
+        <El col="12" colSm="4">
             <Card title="Google Sheet de Moderación">
                 <CardBody textAlign="start">
                     <FormInput mt="3" label="Sheet Id" type="text"  bind:value={sheetId} />
                     <FormInput mt="3" label="Credentials File" type="text"  bind:value={credentialsFile} />
                     <FormInput mt="3" label="Token File" type="text" bind:value={tokenFile} />
-                    <Button mt="3" color="success" on:click={doUpdateSheetConfig}>Guardar cambios</Button>
                 </CardBody>
             </Card>
-            <El tag="hr" />
         </El>
-        <El col="12" colSm="6">
+        <El col="12" colSm="4">
             <Card title="Pociones [Subforos]">
                 <CardBody textAlign="start">
                     <Autocomplete dismissible on:created={onCreatedPotionSub} multiple create items={itemsPotionSub}
                                   bind:value={valuePotionSub}/>
                     <FormInput mt="3" label="Tiempo Límite" type="number" bind:value={timeLimitPotionSub} />
                     <FormInput mt="3" label="Cantidad de Turnos" type="number"  bind:value={turnLimitPotionSub}/>
-                    <Button mt="3" color="success" on:click={doUpdatePotionSubforum}>Guardar cambios</Button>
                 </CardBody>
             </Card>
-            <El tag="hr" />
         </El>
-    </El>
-    <El row>
-        <El col="12" colSm="6">
-        </El>
-        <El col="12" colSm="6">
+        <El col="12" colSm="4">
             <Card title="Pociones [Temas]">
                 <CardBody textAlign="start">
                     <Autocomplete dismissible on:created={onCreatedPotionThr} multiple create items={itemsPotionThr}
                                   bind:value={valuePotionThr}/>
                     <FormInput mt="3" label="Tiempo Límite" type="number" bind:value={timeLimitPotionThr} />
                     <FormInput mt="3" label="Cantidad de Turnos" type="number" bind:value={turnLimitPotionThr}/>
-                    <Button mt="3" color="success" on:click={doUpdatePotionThread}>Guardar cambios</Button>
                 </CardBody>
             </Card>
-            <El tag="hr" />
         </El>
     </El>
+
 
 </El>

@@ -34,7 +34,7 @@
         {:else if selectedMenu === MENU.POTIONS}
             <Potions {config} {tool} />
         {:else if selectedMenu === MENU.SETTINGS}
-            <Settings {config} {tool} bind:redirectAfterSave={selectedMenu} />
+            <Settings {config} {tool}  />
         {:else}
             <h1>
                 Page Not Found
