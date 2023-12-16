@@ -14,6 +14,7 @@ import (
 var assets embed.FS
 
 func main() {
+	//logpanic.InitPanicFile()
 	/*
 		config := conf.GetConfig()
 		//util.ConfigLoggers("reporte.log", 2000000, 10, false, []string{LogTagInfo, LogTagPotions}...)

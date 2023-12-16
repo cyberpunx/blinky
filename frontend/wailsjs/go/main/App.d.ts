@@ -19,3 +19,5 @@ export function SubforumPotionsClub(arg1:Array<string>,arg2:number,arg3:number):
 export function UpdatePotionSubforum(arg1:any):Promise<void>;
 
 export function UpdatePotionThread(arg1:any):Promise<void>;
+
+export function UpdateSheetConfig(arg1:string,arg2:string,arg3:string):Promise<void>;

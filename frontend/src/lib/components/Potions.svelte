@@ -35,11 +35,14 @@
 
 
         GetPotionThread().then((result) => {
-            result.forEach((item) => {
-                potionThrUrls = [...potionThrUrls, item.url];
-            })
-            timeLimitPotionThr = result[0].timeLimit;
-            turnLimitPotionThr = result[0].turnLimit;
+            console.log(result);
+            if (result !== null) {
+                result.forEach((item) => {
+                    potionThrUrls = [...potionThrUrls, item.url];
+                })
+                timeLimitPotionThr = result[0].timeLimit;
+                turnLimitPotionThr = result[0].turnLimit;
+            }
         })
     });
 

@@ -18,6 +18,7 @@
     let tool
 
 
+
 </script>
 <svelte:head>
     <link rel='stylesheet' href={tabler}/>
@@ -33,7 +34,7 @@
         {:else if selectedMenu === MENU.POTIONS}
             <Potions {config} {tool} />
         {:else if selectedMenu === MENU.SETTINGS}
-            <Settings {config} {tool} />
+            <Settings {config} {tool} bind:redirectAfterSave={selectedMenu} />
         {:else}
             <h1>
                 Page Not Found

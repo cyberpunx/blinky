@@ -4,26 +4,31 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"google.golang.org/api/sheets/v4"
 	"localdev/HrHelper/internal/config"
 	"localdev/HrHelper/internal/endpoint"
+	"localdev/HrHelper/internal/gsheet"
 	"localdev/HrHelper/internal/hogwartsforum/tool"
 	"localdev/HrHelper/internal/storage"
 )
 
 // App struct
 type App struct {
-	db   *sql.DB
-	tool *tool.Tool
-	ctx  context.Context
+	db           *sql.DB
+	tool         *tool.Tool
+	SheetService *sheets.Service
+	ctx          context.Context
 }
 
 // NewApp creates a new App application struct
 func NewApp(db *sql.DB) *App {
 	config := storage.GetConfig(db)
+	sheetService := gsheet.GetSheetService(*config.GSheetTokenFile, *config.GSheetCredFile)
 	tool := tool.NewTool(config, nil)
 	return &App{
-		tool: tool,
-		db:   db,
+		db:           db,
+		tool:         tool,
+		SheetService: sheetService,
 	}
 }
 
@@ -87,4 +92,12 @@ func (a *App) GetPotionThread() *[]config.PotionThreadConfig {
 
 func (a *App) UpdatePotionThread(potionThrConfig *[]config.PotionThreadConfig) {
 	storage.UpdatePotionThread(a.db, potionThrConfig)
+}
+
+func (a *App) UpdateSheetConfig(tokenFile, credentialsFile, sheetId string) {
+	config := storage.GetConfig(a.db)
+	config.GSheetTokenFile = &tokenFile
+	config.GSheetCredFile = &credentialsFile
+	config.GSheetId = &sheetId
+	storage.UpdateConfig(a.db, config)
 }

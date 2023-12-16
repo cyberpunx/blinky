@@ -33,3 +33,7 @@ export function UpdatePotionSubforum(arg1) {
 export function UpdatePotionThread(arg1) {
   return window['go']['main']['App']['UpdatePotionThread'](arg1);
 }
+
+export function UpdateSheetConfig(arg1, arg2, arg3) {
+  return window['go']['main']['App']['UpdateSheetConfig'](arg1, arg2, arg3);
+}

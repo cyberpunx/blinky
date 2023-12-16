@@ -18,3 +18,4 @@ frontend/dist
 package-lock.json
 
 client_secret.json
+token.json

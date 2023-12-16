@@ -19,12 +19,15 @@ func InitDB() *sql.DB {
         "password" TEXT,
         "remember" BOOLEAN,
         "baseUrl" TEXT,
-        "unicodeOutput" BOOLEAN
+        "unicodeOutput" BOOLEAN,
+        "gSheetTokenFile" TEXT,
+        "gSheetCredFile" TEXT,
+        "gSheetId" TEXT
     );`
 	_, err = db.Exec(createConfigTableSQL)
 	util.Panic(err)
 
-	selectConfig := `SELECT username, password,remember, baseUrl, unicodeOutput FROM Config;`
+	selectConfig := `SELECT * FROM Config;`
 	rows, err := db.Query(selectConfig)
 	util.Panic(err)
 	defer rows.Close()
@@ -32,7 +35,15 @@ func InitDB() *sql.DB {
 	var configs []config.Config
 	for rows.Next() {
 		var config config.Config
-		if err := rows.Scan(&config.Username, &config.Password, &config.Remember, &config.BaseUrl, &config.UnicodeOutput); err != nil {
+		if err := rows.Scan(
+			&config.Username,
+			&config.Password,
+			&config.Remember,
+			&config.BaseUrl,
+			&config.UnicodeOutput,
+			&config.GSheetTokenFile,
+			&config.GSheetCredFile,
+			&config.GSheetId); err != nil {
 			util.Panic(err)
 		}
 		configs = append(configs, config)
@@ -51,13 +62,21 @@ func InitDB() *sql.DB {
 
 	if len(configs) == 0 {
 		println("No config found. Inserting default config...")
-		insertDefault := `INSERT INTO Config (username, password, remember, baseUrl, unicodeOutput)
-                          VALUES (?, ?, ?, ?, ?);`
-		_, err := db.Exec(insertDefault, "", "", false, "https://www.hogwartsrol.com/", true)
+		insertDefault := `INSERT INTO Config (
+                    username, 
+                    password, 
+                    remember, 
+                    baseUrl, 
+                    unicodeOutput,
+                    gSheetTokenFile,
+                    gSheetCredFile,
+                    gSheetId)
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?);`
+		_, err := db.Exec(insertDefault, "", "", false, "https://www.hogwartsrol.com/", true, "token.json", "client_secret.json", "13CCYZ4veljB6ItPNHdvxvClBZJaC1w-QMkq-H5btR74")
 		util.Panic(err)
 	}
 
-	createPotionSubTableSQL := `CREATE TABLE IF NOT EXISTS PotionSubforum (
+	createPotionSubTableSQL := `CREATE TABLE IF NOT EXISTS PotionSubforumConfig (
         "url" TEXT PRIMARY KEY,
         "timeLimit" INTEGER NOT NULL,
         "turnLimit" INTEGER NOT NULL
@@ -82,7 +101,15 @@ func GetConfig(db *sql.DB) *config.Config {
 
 	// Execute the query
 	row := db.QueryRow(query)
-	err := row.Scan(&config.Username, &config.Password, &config.Remember, &config.BaseUrl, &config.UnicodeOutput)
+	err := row.Scan(
+		&config.Username,
+		&config.Password,
+		&config.Remember,
+		&config.BaseUrl,
+		&config.UnicodeOutput,
+		&config.GSheetTokenFile,
+		&config.GSheetCredFile,
+		&config.GSheetId)
 	util.Panic(err)
 
 	return &config
@@ -90,19 +117,43 @@ func GetConfig(db *sql.DB) *config.Config {
 
 func UpdateConfig(db *sql.DB, config *config.Config) {
 	// First, ensure that there is a row to update
-	ensureRowSQL := `INSERT INTO Config (username, password, remember, baseUrl, unicodeOutput)
-                    SELECT '', '',false, '', false WHERE NOT EXISTS (SELECT 1 FROM Config);`
+	ensureRowSQL := `INSERT INTO Config (
+                    username, 
+                    password, 
+                    remember, 
+                    baseUrl, 
+                    unicodeOutput, 
+                    gSheetTokenFile, 
+                    gSheetCredFile, 
+                    gSheetId)
+                    SELECT '', '',false, '', false, '', '', '' WHERE NOT EXISTS (SELECT 1 FROM Config);`
 	_, err := db.Exec(ensureRowSQL)
 	util.Panic(err)
 
 	// Now, update the existing row with new values
-	updateSQL := `UPDATE Config SET username = ?, password = ?, remember = ?,baseUrl = ?, unicodeOutput = ?;`
-	_, err = db.Exec(updateSQL, config.Username, config.Password, config.Remember, config.BaseUrl, config.UnicodeOutput)
+	updateSQL := `UPDATE Config SET 
+                  username = ?, 
+                  password = ?, 
+                  remember = ?,
+                  baseUrl = ?, 
+                  unicodeOutput = ?, 
+                  gSheetTokenFile = ?, 
+                  gSheetCredFile = ?, 
+                  gSheetId = ?;`
+	_, err = db.Exec(updateSQL,
+		config.Username,
+		config.Password,
+		config.Remember,
+		config.BaseUrl,
+		config.UnicodeOutput,
+		config.GSheetTokenFile,
+		config.GSheetCredFile,
+		config.GSheetId)
 	util.Panic(err)
 }
 
 func GetPotionSubforum(db *sql.DB) *[]config.PotionSubforumConfig {
-	query := `SELECT * FROM PotionSubforum;`
+	query := `SELECT * FROM PotionSubforumConfig;`
 
 	var potionSubConfig []config.PotionSubforumConfig
 
@@ -121,13 +172,13 @@ func GetPotionSubforum(db *sql.DB) *[]config.PotionSubforumConfig {
 
 func UpdatePotionSubforum(db *sql.DB, potionSubConfig *[]config.PotionSubforumConfig) {
 	// Truncate the table and insert the new values
-	truncateSQL := `DELETE FROM PotionSubforum;`
+	truncateSQL := `DELETE FROM PotionSubforumConfig;`
 	_, err := db.Exec(truncateSQL)
 	util.Panic(err)
 
 	//insert one by one the potionSubConfig
 	for _, potionSubforum := range *potionSubConfig {
-		insertSQL := `INSERT INTO PotionSubforum (url, timeLimit, turnLimit)
+		insertSQL := `INSERT INTO PotionSubforumConfig (url, timeLimit, turnLimit)
 					SELECT ?, ?, ?;`
 		_, err := db.Exec(insertSQL, potionSubforum.Url, potionSubforum.TimeLimit, potionSubforum.TurnLimit)
 		util.Panic(err)

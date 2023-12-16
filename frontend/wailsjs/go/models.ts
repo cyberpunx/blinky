@@ -25,6 +25,9 @@ export namespace config {
 	    baseUrl?: string;
 	    unicodeOutput?: boolean;
 	    tasks: Task[];
+	    gSheetTokenFile?: string;
+	    gSheetCredFile?: string;
+	    gSheetId?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -38,6 +41,9 @@ export namespace config {
 	        this.baseUrl = source["baseUrl"];
 	        this.unicodeOutput = source["unicodeOutput"];
 	        this.tasks = this.convertValues(source["tasks"], Task);
+	        this.gSheetTokenFile = source["gSheetTokenFile"];
+	        this.gSheetCredFile = source["gSheetCredFile"];
+	        this.gSheetId = source["gSheetId"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
