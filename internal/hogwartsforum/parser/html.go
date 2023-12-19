@@ -378,3 +378,38 @@ func GetUsername(html string) string {
 	return username
 
 }
+
+func GetPotionPlayers(html string) (string, string, string, string) {
+	reader := strings.NewReader(html)
+	doc, err := goquery.NewDocumentFromReader(reader)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	potionInfo := doc.Find("div.xxEDV").Last()
+	var player1name, player2name, player1url, player2url string
+	potionInfo.Find("strong").Each(func(i int, s *goquery.Selection) {
+		if s.Text() == "Jugador 1:" {
+			player1name = s.NextFiltered("a").Text()
+			player1url, _ = s.NextFiltered("a").Attr("href")
+		} else if s.Text() == "Jugador 2:" {
+			player2name = s.NextFiltered("a").Text()
+			player2url, _ = s.NextFiltered("a").Attr("href")
+		}
+	})
+	//remove @ from player names
+	player1name = strings.ReplaceAll(player1name, "@", "")
+	player2name = strings.ReplaceAll(player2name, "@", "")
+
+	return player1name, player1url, player2name, player2url
+}
+
+func GetPotionPlayerProfileUrl(html string) string {
+	reader := strings.NewReader(html)
+	doc, err := goquery.NewDocumentFromReader(reader)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	player1 := doc.Find("div.postbody").First().Find("strong").First().Text()
+	return player1
+}

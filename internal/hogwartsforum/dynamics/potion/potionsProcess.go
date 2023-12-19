@@ -37,6 +37,7 @@ type PotionsUser struct {
 	Name        string
 	House       string
 	Role        string
+	ProfileUrl  string
 	PlayerBonus int
 	Posts       []*parser.Post
 }
@@ -123,16 +124,20 @@ func identifyRolesOnThread(thread parser.Thread) (player1 PotionsUser, player2 P
 	moderator.Name = thread.Author.Username
 	moderator.Role = Moderator
 
+	p1name, p1url, p2name, p2url := parser.GetPotionPlayers(thread.Posts[0].Content)
+
 	for _, post := range thread.Posts {
 		if post.Author.Username != moderator.Name {
 			if player1.Name == "" {
-				player1.Name = post.Author.Username
+				player1.Name = p1name
 				player1.Role = Player1
 				player1.House = post.Author.House
+				player1.ProfileUrl = p1url
 			} else if player2.Name == "" && post.Author.Username != player1.Name {
-				player2.Name = post.Author.Username
+				player2.Name = p2name
 				player2.Role = Player2
 				player2.House = post.Author.House
+				player2.ProfileUrl = p2url
 			}
 		}
 	}
@@ -313,12 +318,13 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 			elapsedTime := forumDateTime.Sub(*post.Created)
 			if elapsedTime > timeThreshold {
 				fmt.Println(config.Red+"Time Passed: "+config.Reset, elapsedTime)
+				result.Status = StatusFail
 			} else {
 				fmt.Println(config.Green+"Time Passed: "+config.Reset, elapsedTime)
 			}
 		}
 
-		if turnCount == turnLimit {
+		if turnCount == turnLimit && result.Status == StatusWaitingPlayer1 {
 			if diceTotal > potion.TargetScore {
 				result.Status = StatusSuccess
 				result.Score.Success = true
@@ -330,7 +336,6 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 				DiceScoreSum: diceTotal,
 				TotalScore:   diceTotal + result.Score.ModeratorBonus + result.Score.ModeratorMalus + result.Score.Player1Bonus + result.Score.Player2Bonus,
 			}
-
 		}
 
 		postCount++

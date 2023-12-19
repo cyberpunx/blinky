@@ -18,7 +18,7 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-const DEBUG = true
+const DEBUG = false
 
 func main() {
 	//logpanic.InitPanicFile()
