@@ -3,6 +3,7 @@ package tool
 import (
 	"fmt"
 	conf "localdev/HrHelper/internal/config"
+	"localdev/HrHelper/internal/gsheet"
 	"localdev/HrHelper/internal/hogwartsforum/dynamics/chronology"
 	"localdev/HrHelper/internal/hogwartsforum/dynamics/potion"
 	parser "localdev/HrHelper/internal/hogwartsforum/parser"
@@ -118,7 +119,8 @@ func (o *Tool) processPotionsThread(thread parser.Thread, timeLimit, turnLimit i
 	fmt.Println("=== Potion Thread Begin ===")
 	fmt.Println("Thread: " + conf.Purple + thread.Title + conf.Reset + " (Time: " + strconv.Itoa(timeLimit) + "| Turn: " + strconv.Itoa(turnLimit) + ")" + "\n")
 	var report potion.PotionClubReport
-	report = potion.PotionGetReportFromThread(thread, timeLimit, turnLimit, o.ForumDateTime)
+	daysOff := o.getGoogleSheetPotionsDayOff()
+	report = potion.PotionGetReportFromThread(thread, timeLimit, turnLimit, o.ForumDateTime, daysOff)
 	fmt.Println("\n")
 	fmt.Println("=== Potion Thread End === \n")
 	return report
@@ -187,6 +189,13 @@ func (o *Tool) processChronoMainThread(chronoMainThread parser.Thread, hrTool *T
 	fmt.Println("=== Chronology Thread End === \n")
 }
 
+func (o *Tool) getGoogleSheetPotionsDayOff() *[]gsheet.DayOff {
+	rows, err := gsheet.ReadSheetData(o.SheetService, *o.Config.GSheetId, "Permisos Pociones!A269:B")
+	util.Panic(err)
+	daysOff := gsheet.ParseDayOff(rows)
+	return &daysOff
+}
+
 func (o *Tool) ProcessPotionsSubforumList(subForumUrls *[]string, timeLimit, turnLimit *int) []potion.PotionClubReport {
 	fmt.Println("\n\n ========= SUBFORUM CLUB DE POCIONES =========\n\n")
 	fmt.Println("Time Limit: " + conf.Purple + strconv.Itoa(*timeLimit) + conf.Reset)
@@ -216,7 +225,7 @@ func (o *Tool) ProcessPotionsThreadList(threadsUrls *[]string, timeLimit, turnLi
 	for _, threadUrl := range *threadsUrls {
 		potionThreadHtml := o.getThread(threadUrl)
 		potionThread := o.parseThread(potionThreadHtml)
-		report := o.processPotionsThread(*potionThread, *turnLimit, *timeLimit)
+		report := o.processPotionsThread(*potionThread, *timeLimit, *turnLimit)
 		reportMainList = append(reportMainList, report)
 	}
 

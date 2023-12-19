@@ -1,6 +1,7 @@
 package tool
 
 import (
+	"google.golang.org/api/sheets/v4"
 	"localdev/HrHelper/internal/config"
 	"localdev/HrHelper/internal/util"
 	"net/http"
@@ -22,15 +23,17 @@ type LoginResponse struct {
 type Tool struct {
 	Config        *config.Config
 	Client        *http.Client
+	SheetService  *sheets.Service
 	ForumDateTime time.Time
 }
 
-func NewTool(config *config.Config, client *http.Client) *Tool {
+func NewTool(config *config.Config, client *http.Client, gSheetService *sheets.Service) *Tool {
 	forumDateTime, err := util.GetTimeFromTimeZone("America/Mexico_City")
 	util.Panic(err)
 	return &Tool{
 		Config:        config,
 		Client:        client,
 		ForumDateTime: forumDateTime,
+		SheetService:  gSheetService,
 	}
 }

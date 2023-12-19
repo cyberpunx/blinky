@@ -21,9 +21,9 @@ type SubforumPotionsClubResponse struct {
 }
 
 type ThreadsPotionsClubRequest struct {
-	ThreadsUrls *[]string `json:"threadUrls"`
-	TimeLimit   *int      `json:"timeLimit"`
-	TurnLimit   *int      `json:"turnLimit"`
+	ThreadUrls *[]string `json:"threadUrls"`
+	TimeLimit  *int      `json:"timeLimit"`
+	TurnLimit  *int      `json:"turnLimit"`
 }
 
 type ThreadsPotionsClubResponse struct {

@@ -147,3 +147,46 @@ func GetSheetService(tokFile, credPath string) *sheets.Service {
 	util.Panic(err)
 	return service
 }
+
+func ParseDayOff(rows [][]interface{}) []DayOff {
+	var daysOff []DayOff
+	for _, row := range rows {
+		//skip first row because it's the header
+		//if i == 0 {
+		//	continue
+		//}
+		if len(row) == 2 {
+			date, err := time.Parse("2/01/2006", row[1].(string)) //format DD/MM/YYYY
+			util.Panic(err)
+			dayOff := DayOff{
+				Username: row[0].(string),
+				Date:     date,
+			}
+			daysOff = append(daysOff, dayOff)
+		}
+	}
+
+	return daysOff
+}
+
+func FindDayOffForUser(daysOff *[]DayOff, username string) *DayOff {
+	for _, dayOff := range *daysOff {
+		dayOffUsername := util.TrimAndToLower(dayOff.Username)
+		username = util.TrimAndToLower(username)
+		if dayOffUsername == username {
+			return &dayOff
+		}
+	}
+	return nil
+}
+
+func FindDayOffForPLayerBetweenDates(daysOff *[]DayOff, username string, startDate, endDate time.Time) *DayOff {
+	for _, dayOff := range *daysOff {
+		dayOffUsername := util.TrimAndToLower(dayOff.Username)
+		username = util.TrimAndToLower(username)
+		if dayOffUsername == username && dayOff.Date.After(startDate) && dayOff.Date.Before(endDate) {
+			return &dayOff
+		}
+	}
+	return nil
+}

@@ -25,23 +25,29 @@
         GetPotionSubforum().then((result) => {
             valuePotionSub = [];
             itemsPotionSub = [];
-            result.forEach((item) => {
-                valuePotionSub = [...valuePotionSub, item.url];
-                itemsPotionSub = [...itemsPotionSub, item.url];
-            })
-            timeLimitPotionSub = result[0].timeLimit;
-            turnLimitPotionSub = result[0].turnLimit;
+            if (Array.isArray(result)) {
+                result.forEach((item) => {
+                    valuePotionSub = [...valuePotionSub, item.url];
+                    itemsPotionSub = [...itemsPotionSub, item.url];
+                })
+                timeLimitPotionSub = result[0].timeLimit;
+                turnLimitPotionSub = result[0].turnLimit;
+            }
+
         })
 
         GetPotionThread().then((result) => {
             valuePotionThr = [];
             itemsPotionThr = [];
-            result.forEach((item) => {
-                valuePotionThr = [...valuePotionThr, item.url];
-                itemsPotionThr = [...itemsPotionThr, item.url];
-            })
-            timeLimitPotionThr = result[0].timeLimit;
-            turnLimitPotionThr = result[0].turnLimit;
+            if (Array.isArray(result)) {
+                result.forEach((item) => {
+                    valuePotionThr = [...valuePotionThr, item.url];
+                    itemsPotionThr = [...itemsPotionThr, item.url];
+                })
+                timeLimitPotionThr = result[0].timeLimit;
+                turnLimitPotionThr = result[0].turnLimit;
+            }
+
         })
     }
     let saveConfirmation = '';

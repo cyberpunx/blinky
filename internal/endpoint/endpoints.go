@@ -24,7 +24,7 @@ func (o *Endpoints) SubforumPotionsClub(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	threadReports := o.Tool.ProcessPotionsSubforumList(request.SubForumUrls, request.TurnLimit, request.TimeLimit)
+	threadReports := o.Tool.ProcessPotionsSubforumList(request.SubForumUrls, request.TimeLimit, request.TurnLimit)
 	response := SubforumPotionsClubResponse{ThreadReports: threadReports}
 
 	jsonResponse, err := json.Marshal(response)
@@ -50,7 +50,7 @@ func (o *Endpoints) ThreadsPotionsClub(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threadReports := o.Tool.ProcessPotionsThreadList(request.ThreadsUrls, request.TurnLimit, request.TimeLimit)
+	threadReports := o.Tool.ProcessPotionsThreadList(request.ThreadUrls, request.TimeLimit, request.TurnLimit)
 	response := SubforumPotionsClubResponse{ThreadReports: threadReports}
 
 	jsonResponse, err := json.Marshal(response)

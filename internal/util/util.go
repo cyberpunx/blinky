@@ -136,10 +136,32 @@ func AdjustDateTimeToStr(currentDate time.Time, dateString string) string {
 	return dateString
 }
 
+func IsDateInBetween(date time.Time, startDate time.Time, endDate time.Time) bool {
+	return date.After(startDate) && date.Before(endDate)
+}
+
+func IsDateInCurrentMonth(date time.Time) bool {
+	currentDate := time.Now()
+	return date.Month() == currentDate.Month() && date.Year() == currentDate.Year()
+}
+
 func MarshalJsonPretty(i interface{}) []byte {
 	buffer := &bytes.Buffer{}
 	encoder := json.NewEncoder(buffer)
 	encoder.SetIndent("", "    ")
 	Panic(encoder.Encode(i))
 	return buffer.Bytes()
+}
+
+func TrimAndToLower(s string) string {
+	return strings.ToLower(strings.TrimSpace(s))
+}
+
+func IsDateWithinTimeLimit(currentTime, lastPostTime time.Time, timeThreshold time.Duration) bool {
+	// Check if the current exceeds the time threshold
+	if lastPostTime.Add(timeThreshold).Before(currentTime) {
+		return false
+	} else {
+		return true
+	}
 }

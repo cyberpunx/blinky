@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"google.golang.org/api/sheets/v4"
 	"localdev/HrHelper/internal/config"
 	"localdev/HrHelper/internal/endpoint"
 	"localdev/HrHelper/internal/gsheet"
@@ -14,21 +13,19 @@ import (
 
 // App struct
 type App struct {
-	db           *sql.DB
-	tool         *tool.Tool
-	SheetService *sheets.Service
-	ctx          context.Context
+	db   *sql.DB
+	tool *tool.Tool
+	ctx  context.Context
 }
 
 // NewApp creates a new App application struct
 func NewApp(db *sql.DB) *App {
 	config := storage.GetConfig(db)
 	sheetService := gsheet.GetSheetService(*config.GSheetTokenFile, *config.GSheetCredFile)
-	tool := tool.NewTool(config, nil)
+	tool := tool.NewTool(config, nil, sheetService)
 	return &App{
-		db:           db,
-		tool:         tool,
-		SheetService: sheetService,
+		db:   db,
+		tool: tool,
 	}
 }
 
@@ -59,7 +56,9 @@ func (a *App) Login(user, pass string, remeber bool) *tool.LoginResponse {
 	config.Remember = &remeber
 	storage.UpdateConfig(a.db, config)
 
-	hrTool := tool.NewTool(config, client)
+	sheetService := gsheet.GetSheetService(*config.GSheetTokenFile, *config.GSheetCredFile)
+
+	hrTool := tool.NewTool(config, client, sheetService)
 	a.tool = hrTool
 	return loginResponse
 }

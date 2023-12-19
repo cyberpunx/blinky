@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"localdev/HrHelper/internal/config"
+	"localdev/HrHelper/internal/gsheet"
 	"localdev/HrHelper/internal/hogwartsforum/parser"
 	"localdev/HrHelper/internal/util"
 	"strconv"
@@ -58,6 +59,7 @@ type PotionClubTurn struct {
 	Number      int
 	DiceValue   int
 	OnTime      bool
+	DayOffUsed  bool
 	TimeElapsed time.Time
 }
 
@@ -191,16 +193,8 @@ func removeOtherPostsFromThread(player1 PotionsUser, player2 PotionsUser, modera
 
 	return threadWithoutOthers
 }
-func isPostWithinTimeLimit(currentPostTime, lastPostTime time.Time, timeThreshold time.Duration) bool {
-	// Check if the current post exceeds the time threshold
-	if lastPostTime.Add(timeThreshold).Before(currentPostTime) {
-		return false
-	} else {
-		return true
-	}
 
-}
-func printPostReport(isPlayer bool, postCount int, postUser string, role string, turnCount int, onTime bool, turnDice string, diceTotal int) string {
+func printPostReport(isPlayer bool, postCount int, postUser string, role string, turnCount int, onTime bool, dayOffUsed bool, turnDice string, diceTotal int) string {
 	strReport := ""
 	timeStatus := ""
 	if !isPlayer {
@@ -209,7 +203,11 @@ func printPostReport(isPlayer bool, postCount int, postUser string, role string,
 		if onTime {
 			timeStatus = config.Green + "OK" + config.Reset
 		} else {
-			timeStatus = config.Red + "FAIL" + config.Reset
+			if dayOffUsed {
+				timeStatus = config.Yellow + "DAY OFF" + config.Reset
+			} else {
+				timeStatus = config.Red + "FAIL" + config.Reset
+			}
 		}
 		strReport = "{i}) Turn {turnCount} " + config.Purple + "{postUser} " + config.Reset + " ({role}) | Time: {timeStatus} | Dice: {turnDice} | Total: {diceTotal}" + config.Reset
 	}
@@ -225,7 +223,7 @@ func printPostReport(isPlayer bool, postCount int, postUser string, role string,
 		})
 	return s
 }
-func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimit int, forumDateTime time.Time) PotionClubReport {
+func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimit int, forumDateTime time.Time, daysOff *[]gsheet.DayOff) PotionClubReport {
 	timeThreshold := time.Duration(timeLimitHours) * time.Hour
 	potion := getPotionFromThread(rawThread)
 	player1, player2, moderator, others := identifyRolesOnThread(rawThread)
@@ -266,6 +264,7 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 		postUser := post.Author.Username
 		postPlayer, postRole := findPlayerAndRole(postUser, player1, player2, moderator, others)
 		isPlayerFlag := postPlayer.Name == player1.Name || postPlayer.Name == player2.Name
+		dayOffUsed := false
 
 		if isPlayerFlag {
 			playerPostCount[postUser]++
@@ -274,7 +273,17 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 			} else if postRole == Player2 {
 				result.Status = StatusWaitingPlayer1
 			}
-			postOnTime = isPostWithinTimeLimit(*post.Created, lastPostTime, timeThreshold)
+
+			postOnTime = util.IsDateWithinTimeLimit(*post.Created, lastPostTime, timeThreshold)
+			dateLimit := lastPostTime.Add(timeThreshold)
+			// if player post is out of time, check if the player used a day off
+			if !postOnTime {
+				// check for player day off on google sheet and if it's within the time limit
+				playerDayOff := gsheet.FindDayOffForPLayerBetweenDates(daysOff, postPlayer.Name, lastPostTime, dateLimit)
+				if playerDayOff != nil {
+					dayOffUsed = true
+				}
+			}
 
 			postDiceValue := 0
 			if len(post.Dices) != 1 {
@@ -290,13 +299,14 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 				Number:      turnCount,
 				DiceValue:   postDiceValue,
 				OnTime:      postOnTime,
+				DayOffUsed:  dayOffUsed,
 				TimeElapsed: lastPostTime,
 			}
 			result.Turns = append(result.Turns, turn)
 			lastPostTime = *post.Created
 		}
 
-		s := printPostReport(isPlayerFlag, postCount, postUser, postRole, turnCount, postOnTime, postDice, diceTotal)
+		s := printPostReport(isPlayerFlag, postCount, postUser, postRole, turnCount, postOnTime, dayOffUsed, postDice, diceTotal)
 		fmt.Println(s)
 
 		if threadLastPost.Id == post.Id && isPlayerFlag {
@@ -331,10 +341,12 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 		}
 	}
 
-	//if at least 1 turn is out of time, the potion is a fail
+	//if at least 1 turn is out of time and day off was not used, the potion is a fail
 	for _, turn := range result.Turns {
 		if !turn.OnTime {
-			result.Status = StatusFail
+			if !turn.DayOffUsed {
+				result.Status = StatusFail
+			}
 		}
 	}
 
