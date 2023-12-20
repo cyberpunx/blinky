@@ -15,7 +15,13 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"time"
+)
+
+const (
+	SheetRangeDaysOff     = "Permisos Pociones!A269:B"
+	SheetRangePlayerBonus = "Logros Pociones!A2:B"
 )
 
 func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
@@ -165,8 +171,27 @@ func ParseDayOff(rows [][]interface{}) []DayOff {
 			daysOff = append(daysOff, dayOff)
 		}
 	}
-
 	return daysOff
+}
+
+func ParsePlayerBonus(rows [][]interface{}) []PlayerBonus {
+	var playerBonus []PlayerBonus
+	for _, row := range rows {
+		//skip first row because it's the header
+		//if i == 0 {
+		//	continue
+		//}
+		if len(row) == 2 {
+			bonusValue, err := strconv.Atoi(row[1].(string))
+			util.Panic(err)
+			pBonus := PlayerBonus{
+				Username: row[0].(string),
+				Bonus:    bonusValue,
+			}
+			playerBonus = append(playerBonus, pBonus)
+		}
+	}
+	return playerBonus
 }
 
 func FindDayOffForUser(daysOff *[]DayOff, username string) *DayOff {
@@ -189,4 +214,15 @@ func FindDayOffForPLayerBetweenDates(daysOff *[]DayOff, username string, startDa
 		}
 	}
 	return nil
+}
+
+func GetPlayerBonusForUsername(playerBonus *[]PlayerBonus, username string) int {
+	for _, pb := range *playerBonus {
+		pbUser := util.TrimAndToLower(pb.Username)
+		username = util.TrimAndToLower(username)
+		if pbUser == username {
+			return pb.Bonus
+		}
+	}
+	return 0
 }

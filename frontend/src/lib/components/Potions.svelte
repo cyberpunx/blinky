@@ -1,6 +1,28 @@
 <script>
-    import {Card,CardBody,CardTitle,CardFooter,CardActions, El, Spinner, Table, TableBody, TableCell, TableHead, TableRow,
-        Accordions, Accordion, AccordionBody, Badge, Icon} from 'yesvelte'
+    import {
+        Card,
+        CardBody,
+        CardTitle,
+        CardFooter,
+        CardActions,
+        El,
+        Spinner,
+        Table,
+        TableBody,
+        TableCell,
+        TableHead,
+        TableRow,
+        Accordions,
+        Accordion,
+        AccordionBody,
+        Badge,
+        Icon,
+        Ribbon,
+        Button,
+        Modal,
+        ModalBody,
+        ModalFooter,
+    } from 'yesvelte'
     import {onMount} from "svelte";
     import {GetPotionSubforum, GetPotionThread, SubforumPotionsClub} from "../../../wailsjs/go/main/App.js";
     import {HOUSES} from '../constants.js';
@@ -11,22 +33,26 @@
     export let tool;
     let loading = true;
     let subForumPotionsThreads;
-
+    let potionSubUrls = [];
+    let timeLimitPotionSub;
+    let turnLimitPotionSub;
+    let potionThrUrls = [];
+    let timeLimitPotionThr;
+    let turnLimitPotionThr;
+    let clipboardModalShow = false;
+    const toggleclipboardModal = () => (clipboardModalShow = !clipboardModalShow)
 
     onMount(() => {
-        let potionThrUrls = [];
-        let timeLimitPotionThr;
-        let turnLimitPotionThr;
-
         GetPotionSubforum().then((result) => {
-            let potionSubUrls = [];
-            let timeLimitPotionSub = result[0].timeLimit;
-            let turnLimitPotionSub = result[0].turnLimit;
+            potionSubUrls = [];
+            timeLimitPotionSub = result[0].timeLimit;
+            turnLimitPotionSub = result[0].turnLimit;
 
-            result.forEach((item) => {
-                potionSubUrls = [...potionSubUrls, item.url];
-            })
-
+            if (result !== null) {
+                result.forEach((item) => {
+                    potionSubUrls = [...potionSubUrls, item.url];
+                })
+            }
             SubforumPotionsClub(potionSubUrls, timeLimitPotionSub, turnLimitPotionSub).then((result) => {
                 console.log(result['threadReports']);
                 subForumPotionsThreads = result['threadReports'];
@@ -34,10 +60,11 @@
             })
         })
 
-
-
         GetPotionThread().then((result) => {
-            console.log(result);
+            potionThrUrls = [];
+            timeLimitPotionThr;
+            turnLimitPotionThr;
+
             if (result !== null) {
                 result.forEach((item) => {
                     potionThrUrls = [...potionThrUrls, item.url];
@@ -68,7 +95,10 @@
         const name = player['Name'];
         const house = player['House'];
         const color = getUserColorByHouse(house);
-
+        const playerBonus = player['PlayerBonus'];
+        if (playerBonus > 0 ){
+            return `<span style="color: var(${color})">${name} (+${playerBonus})</span>`;
+        }
         return `<span style="color: var(${color})">${name}</span>`;
     }
 
@@ -157,6 +187,7 @@
         const postDateTime = new Date(postTime);
         const elapsedTime = Math.abs(forumDateTime - postDateTime);
 
+
         let h,m,s;
         h = Math.floor(elapsedTime/1000/60/60);
         m = Math.floor((elapsedTime/1000/60/60 - h)*60);
@@ -164,6 +195,44 @@
 
     }
 
+    function getTurnDatePosted(turn){
+        let postedTime = turn['TurnDatePosted']
+        //format is "2023-12-18T21:35:00Z"
+        //convert to "2023/12/18 21:35"
+        postedTime = postedTime.replace("T", " ");
+        postedTime = postedTime.replace("Z", "");
+        return postedTime;
+    }
+
+    function getTurnDateLimit(turn){
+        let dateLimit = turn['TurnDateLimit']
+        //format is "2023-12-18T21:35:00Z"
+        //convert to "2023/12/18 21:35"
+        dateLimit = dateLimit.replace("T", " ");
+        dateLimit = dateLimit.replace("Z", "");
+        return dateLimit;
+    }
+
+    function getTurnElapsedTime(turn){
+        let elapsedTimeNano = turn['TimeElapsed']
+        let elapsedTime = elapsedTimeNano / 1000000; //convert to milliseconds
+        let h,m,s;
+        h = Math.floor(elapsedTime/1000/60/60);
+        m = Math.floor((elapsedTime/1000/60/60 - h)*60);
+        return `${h}h ${m}m`;
+    }
+
+    function getPotionScore(thread){
+        const score = thread['Score']['DiceScoreSum'];
+        const target = thread['Potion']['TargetScore'];
+        return `${score}/${target}`;
+    }
+    function getModMsg(thread){
+        const modMsg = thread['Score']['ModMessage'];
+        navigator.clipboard.writeText(modMsg);
+        console.log(modMsg);
+        toggleclipboardModal();
+    }
 
 
 </script>
@@ -186,13 +255,13 @@
             <p>Cargando pociones...</p>
         </El>
     {:else}
-        {#each subForumPotionsThreads as thread}
+        {#each subForumPotionsThreads as thread, threadIndex}
             <El col="12" colSm="12" mt="5">
                 <Card status statusColor="{getStatusColor(thread['Status'])}" statusPosition="start" statusSize="md">
                     <CardBody>
                         <CardTitle>
                             <El row>
-                                <El col="12" colSm="8">
+                                <El col="12" colSm="7" px="5" style="margin-left: 10px">
                                     [ <El tag="a" style="cursor: pointer; color:--mod-color" on:click={BrowserOpenURL(getModeratorUrl(thread))}>
                                         {@html getModeratorName(thread)}
                                     </El>]
@@ -203,7 +272,6 @@
                                     <El tag="a" style="cursor: pointer; color:white" on:click={BrowserOpenURL(getPotionUrl(thread))}>
                                         ({@html getPotionName(thread)})
                                     </El>
-                                    <El tag="span" textColor="muted" fontSize="5">| Tiempo transcurrido: {getElapsedTime(thread)} |</El>
                                 </El>
                                 <El col="12" colSm="4" textAlign="end" textColor="{getStatusColor(thread['Status'])}">
                                     {@html getStatusText(thread)}
@@ -220,28 +288,44 @@
                                                     <TableCell style="color: var(--ds-color8); background-color: var(--ds-color2)">Turno</TableCell>
                                                     <TableCell style="color: var(--ds-color8); background-color: var(--ds-color2)">Jugador</TableCell>
                                                     <TableCell style="color: var(--ds-color8); background-color: var(--ds-color2)">Dado</TableCell>
+                                                    <TableCell style="color: var(--ds-color8); background-color: var(--ds-color2)">Fecha Post</TableCell>
+                                                    <TableCell style="color: var(--ds-color8); background-color: var(--ds-color2)">Fecha Límite</TableCell>
+                                                    <TableCell style="color: var(--ds-color8); background-color: var(--ds-color2)">Tiempo de Respuesta</TableCell>
                                                     <TableCell style="color: var(--ds-color8); background-color: var(--ds-color2)">A tiempo</TableCell>
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
-                                                {#each thread['Turns'] as turn}
-                                                <TableRow>
-                                                    <TableCell>{turn['Number']}</TableCell>
-                                                    <TableCell>{turn['Player']['Role']} | {turn['Player']['Name']}</TableCell>
-                                                    <TableCell>{turn['DiceValue']}</TableCell>
-                                                    <TableCell>
-                                                        {#if turn['OnTime']}
-                                                            <Icon name="check" color="success"/>
-                                                        {:else}
-                                                            {#if turn['DayOffUsed']}
-                                                                <Icon name="check" color="warning"/>
+                                                {#if thread['Turns'] == null}
+                                                    <TableRow>
+                                                        <TableCell col="4">No hay turnos</TableCell>
+                                                    </TableRow>
+                                                {:else}
+                                                    {#each thread['Turns'] as turn}
+                                                        <TableRow>
+                                                            <TableCell>{turn['Number']}</TableCell>
+                                                            <TableCell>{turn['Player']['Role']} | {turn['Player']['Name']}</TableCell>
+                                                            <TableCell>{turn['DiceValue']}</TableCell>
+                                                            {#if turn['OnTime']}
+                                                                <TableCell><El textColor="success">{getTurnDatePosted(turn)}</El></TableCell>
+                                                                <TableCell><El textColor="success">{getTurnDateLimit(turn)}</El></TableCell>
+                                                                <TableCell><El textColor="success">{getTurnElapsedTime(turn)}</El></TableCell>
+                                                                <TableCell><Icon name="check" color="success"/></TableCell>
                                                             {:else}
-                                                                <Icon name="x" color="danger"/>
+                                                                {#if turn['DayOffUsed']}
+                                                                    <TableCell><El textColor="warning">{getTurnDatePosted(turn)}</El></TableCell>
+                                                                    <TableCell><El textColor="warning">{getTurnDateLimit(turn)} (Permiso)</El></TableCell>
+                                                                    <TableCell><El textColor="warning">{getTurnElapsedTime(turn)}</El></TableCell>
+                                                                    <TableCell><Icon name="check" color="warning"/></TableCell>
+                                                                {:else}
+                                                                    <TableCell><El textColor="danger">{getTurnDatePosted(turn)}</El></TableCell>
+                                                                    <TableCell><El textColor="danger">{getTurnDateLimit(turn)}</El></TableCell>
+                                                                    <TableCell><El textColor="danger">{getTurnElapsedTime(turn)}</El></TableCell>
+                                                                    <TableCell><Icon name="x" color="danger"/></TableCell>
+                                                                {/if}
                                                             {/if}
-                                                        {/if}
-                                                    </TableCell>
-                                                </TableRow>
-                                                {/each}
+                                                        </TableRow>
+                                                    {/each}
+                                                {/if}
                                             </TableBody>
                                         </Table>
                                     </AccordionBody>
@@ -249,7 +333,24 @@
                             </Accordions>
                         </p>
                     </CardBody>
-                    <CardFooter>This is standard card footer</CardFooter>
+                    <Ribbon bgColor="light" textColor="dark" fontSize="4" fontWeight="bolder" elementPosition="start">{threadIndex+1}/{subForumPotionsThreads.length}</Ribbon>
+                    <CardFooter>
+                        <El tag="span" mx="3" textColor={getStatusColor(thread['Status'])}>Tiempo transcurrido: {getElapsedTime(thread)}</El>
+                        <El tag="span" mx="3" textColor={getStatusColor(thread['Status'])}>Puntaje: {getPotionScore(thread)}</El>
+                        {#if thread['Status'] === 'Success'}
+                            <El tag="span" mx="3"><Button color="primary" on:click={getModMsg(thread)}><Icon name="wand" /> Moderar! </Button></El>
+                        {:else if thread['Status'] === 'Fail'}
+                            <El tag="span" mx="3"><Button color="primary" on:click={getModMsg(thread)}><Icon name="wand" /> Moderar! </Button></El>
+                        {/if}
+                    </CardFooter>
+                    <Modal title="¡Listo! 💫" autoClose backdrop={false} bind:show={clipboardModalShow}>
+                        <ModalBody>
+                            <p>El mensaje del moderador se ha copiado al portapapeles.</p>
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button color="primary" on:click={() => (clipboardModalShow = false)}>OK</Button>
+                        </ModalFooter>
+                    </Modal>
                 </Card>
             </El>
             <El tag="hr" />

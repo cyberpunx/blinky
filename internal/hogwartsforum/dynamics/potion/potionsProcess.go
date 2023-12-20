@@ -1,8 +1,10 @@
 package potion
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"html/template"
 	"localdev/HrHelper/internal/config"
 	"localdev/HrHelper/internal/gsheet"
 	"localdev/HrHelper/internal/hogwartsforum/parser"
@@ -55,24 +57,62 @@ type PotionClubReport struct {
 	Turns     []PotionClubTurn
 }
 
+type ModMsgPotionFailData struct {
+	RewardedPlayer            string
+	RewardedPlayerGoldAmount  int
+	RewardedPlayerHousePoints int
+	RewardedPlayerHouse       string
+	PenalizedPlayer           string
+	PenalizedPlayerHouse      string
+}
+
+type ModMsgPotionSuccessData struct {
+	DiceScoreSum      int
+	ModeratorMalus    int
+	ModeratorBonus    int
+	PlayersTotalBonus int
+	TotalScore        int
+	TargetScore       int
+	Player1           string
+	Player2           string
+	PotionIcon        template.HTML
+	Player1House      string
+	Player2House      string
+}
+
+type ModMsgNewPotionData struct {
+	Player1     string
+	Player2     string
+	PotionName  string
+	TurnLimit   int
+	TargetScore int
+	Ingredients []string
+}
+
 type PotionClubTurn struct {
-	Player      PotionsUser
-	Number      int
-	DiceValue   int
-	OnTime      bool
-	DayOffUsed  bool
-	TimeElapsed time.Time
+	Player         PotionsUser
+	Number         int
+	DiceValue      int
+	OnTime         bool
+	DayOffUsed     bool
+	TurnDatePosted time.Time
+	TurnDateLimit  time.Time
+	TimeElapsed    time.Duration
 }
 
 type PotionClubScoreBoard struct {
-	DiceScoreSum   int
-	ModeratorBonus int
-	ModeratorMalus int
-	Player1Bonus   int
-	Player2Bonus   int
-	TargetScore    int
-	TotalScore     int
-	Success        bool
+	ReportFailed      ModMsgPotionFailData
+	ReportSucced      ModMsgPotionSuccessData
+	DiceScoreSum      int
+	ModeratorBonus    int
+	ModeratorMalus    int
+	Player1Bonus      int
+	Player2Bonus      int
+	PlayersTotalBonus int
+	TargetScore       int
+	TotalScore        int
+	Success           bool
+	ModMessage        string
 }
 
 func getPotionFromThread(thread parser.Thread) *Potion {
@@ -125,20 +165,19 @@ func identifyRolesOnThread(thread parser.Thread) (player1 PotionsUser, player2 P
 	moderator.Role = Moderator
 
 	p1name, p1url, p2name, p2url := parser.GetPotionPlayers(thread.Posts[0].Content)
+	player1.Name = p1name
+	player1.ProfileUrl = p1url
+	player1.Role = Player1
+	player2.Name = p2name
+	player2.ProfileUrl = p2url
+	player2.Role = Player2
 
 	for _, post := range thread.Posts {
-		if post.Author.Username != moderator.Name {
-			if player1.Name == "" {
-				player1.Name = p1name
-				player1.Role = Player1
-				player1.House = post.Author.House
-				player1.ProfileUrl = p1url
-			} else if player2.Name == "" && post.Author.Username != player1.Name {
-				player2.Name = p2name
-				player2.Role = Player2
-				player2.House = post.Author.House
-				player2.ProfileUrl = p2url
-			}
+		if post.Author.Username == p1name && player1.House == "" {
+			player1.House = post.Author.House
+		}
+		if post.Author.Username == p2name && player2.House == "" {
+			player2.House = post.Author.House
 		}
 	}
 
@@ -228,7 +267,7 @@ func printPostReport(isPlayer bool, postCount int, postUser string, role string,
 		})
 	return s
 }
-func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimit int, forumDateTime time.Time, daysOff *[]gsheet.DayOff) PotionClubReport {
+func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimit int, forumDateTime time.Time, daysOff *[]gsheet.DayOff, playerBonus *[]gsheet.PlayerBonus) PotionClubReport {
 	timeThreshold := time.Duration(timeLimitHours) * time.Hour
 	potion := getPotionFromThread(rawThread)
 	player1, player2, moderator, others := identifyRolesOnThread(rawThread)
@@ -241,6 +280,10 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 	diceTotal := 0
 	postOnTime := false
 	threadLastPost := *threadWithoutOthers.Posts[len(threadWithoutOthers.Posts)-1]
+	p1Bonus := gsheet.GetPlayerBonusForUsername(playerBonus, player1.Name)
+	p2Bonus := gsheet.GetPlayerBonusForUsername(playerBonus, player2.Name)
+	player1.PlayerBonus = p1Bonus
+	player2.PlayerBonus = p2Bonus
 
 	result := PotionClubReport{
 		Player1:   player1,
@@ -251,14 +294,16 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 		Potion:    *potion,
 		Status:    StatusWaitingPlayer1,
 		Score: PotionClubScoreBoard{
-			DiceScoreSum:   0,
-			ModeratorBonus: 0,
-			ModeratorMalus: 0,
-			Player1Bonus:   0,
-			Player2Bonus:   0,
-			TargetScore:    potion.TargetScore,
-			TotalScore:     0,
-			Success:        false,
+			DiceScoreSum:      0,
+			ModeratorBonus:    0,
+			ModeratorMalus:    0,
+			Player1Bonus:      player1.PlayerBonus,
+			Player2Bonus:      player2.PlayerBonus,
+			PlayersTotalBonus: player1.PlayerBonus + player2.PlayerBonus,
+			TargetScore:       potion.TargetScore,
+			TotalScore:        0,
+			Success:           false,
+			ModMessage:        "",
 		},
 		TurnLimit: turnLimit,
 		TimeLimit: timeLimitHours,
@@ -299,13 +344,16 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 				diceTotal += postDiceValue
 				result.Score.DiceScoreSum += postDiceValue
 			}
+
 			turn := PotionClubTurn{
-				Player:      *postPlayer,
-				Number:      turnCount,
-				DiceValue:   postDiceValue,
-				OnTime:      postOnTime,
-				DayOffUsed:  dayOffUsed,
-				TimeElapsed: lastPostTime,
+				Player:         *postPlayer,
+				Number:         turnCount,
+				DiceValue:      postDiceValue,
+				OnTime:         postOnTime,
+				DayOffUsed:     dayOffUsed,
+				TurnDatePosted: *post.Created,
+				TurnDateLimit:  dateLimit,
+				TimeElapsed:    post.Created.Sub(lastPostTime),
 			}
 			result.Turns = append(result.Turns, turn)
 			lastPostTime = *post.Created
@@ -319,23 +367,35 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 			if elapsedTime > timeThreshold {
 				fmt.Println(config.Red+"Time Passed: "+config.Reset, elapsedTime)
 				result.Status = StatusFail
+				result.Score.Success = false
+				result.Score.TargetScore = potion.TargetScore
+				if postPlayer.Name == player1.Name {
+					generatePotionFailedReport(player2.Name, &result)
+				} else {
+					generatePotionFailedReport(player1.Name, &result)
+				}
+				result.Score.ModMessage = generateModMessage(result)
 			} else {
 				fmt.Println(config.Green+"Time Passed: "+config.Reset, elapsedTime)
 			}
 		}
 
 		if turnCount == turnLimit && result.Status == StatusWaitingPlayer1 {
+			result.Score.DiceScoreSum = diceTotal
+			result.Score.TotalScore = diceTotal + result.Score.ModeratorBonus + result.Score.ModeratorMalus + result.Score.Player1Bonus + result.Score.Player2Bonus
+
 			if diceTotal > potion.TargetScore {
 				result.Status = StatusSuccess
 				result.Score.Success = true
+				result.Score.TargetScore = potion.TargetScore
+				generatePotionSuccessReport(&result)
 			} else {
 				result.Status = StatusFail
 				result.Score.Success = false
+				result.Score.TargetScore = potion.TargetScore
+				generatePotionFailedReport(postPlayer.Name, &result)
 			}
-			result.Score = PotionClubScoreBoard{
-				DiceScoreSum: diceTotal,
-				TotalScore:   diceTotal + result.Score.ModeratorBonus + result.Score.ModeratorMalus + result.Score.Player1Bonus + result.Score.Player2Bonus,
-			}
+			result.Score.ModMessage = generateModMessage(result)
 		}
 
 		postCount++
@@ -351,6 +411,9 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 		if !turn.OnTime {
 			if !turn.DayOffUsed {
 				result.Status = StatusFail
+				result.Score.Success = false
+				generatePotionFailedReport(turn.Player.Name, &result)
+				result.Score.ModMessage = generateModMessage(result)
 			}
 		}
 	}
@@ -358,96 +421,66 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 	return result
 }
 
-/*
-func ClubPotionsProcessorOld(thread Thread, hoursLimit int) {
-	timeThreshold := time.Duration(hoursLimit) * time.Hour
-	turnCount := 1
-	player1, player2 := "", ""
-	player1PostCount, player2PostCount := 0, 0
-	moderator := thread.Author.Username
-	authorRole := ""
-	timeLimitStatus := ""
-	postCount := 1
-	diceSum := 0
-	turnDice := ""
-
-	// Initialize maps to count each player's posts and store the time of the last post by each player
-	playerPostCount := make(map[string]int)
-	lastPostTime := *thread.Created
-
-	// Iterate through the posts to identify players and count turns
-	for _, post := range thread.Posts {
-		authorUsername := post.Author.Username
-
-		if authorUsername == moderator {
-			authorRole = Cyan + "Moderator" + Reset
-		}
-
-		// Identify the players
-		if player1 == "" && authorUsername != moderator {
-			player1 = authorUsername
-		} else if player2 == "" && authorUsername != player1 && authorUsername != moderator {
-			player2 = authorUsername
-		}
-
-		// Count the post for the current player and update the last post time
-		if authorUsername != moderator {
-			playerPostCount[authorUsername]++
-		}
-
-		if authorUsername == player1 {
-			authorRole = "Player 1"
-			player1PostCount++
-		} else if authorUsername == player2 {
-			authorRole = "Player 2"
-			player2PostCount++
-		} else {
-			authorRole = Cyan + "Other" + Reset
-		}
-
-		if authorUsername != moderator {
-			// Check if the current post exceeds the time threshold
-			if lastPostTime.Add(timeThreshold).Before(*post.Created) {
-				timeLimitStatus = Red + "FAIL" + Reset
-			} else {
-				timeLimitStatus = Green + "OK" + Reset
-			}
-			lastPostTime = *post.Created
-
-			if len(post.Dices) != 1 {
-				turnDice = "N/A"
-			} else {
-				turnDice = Yellow + strconv.Itoa(post.Dices[0].Result) + Reset
-				diceSum += post.Dices[0].Result
-			}
-		}
-
-		strReport := ""
-		if authorUsername == moderator {
-			strReport = "{i}) " + Purple + "{authorUsername} " + Reset + " ({role})" + Reset
-		} else {
-			strReport = "{i}) Turn {turnCount} " + Purple + "{authorUsername} " + Reset + " ({role}) | Time: {timeLimitStatus} | Dice: {turnDice} | Total: {diceSum}" + Reset
-		}
-
-		s := util.Fprint(strReport,
-			util.P{"i": strconv.Itoa(postCount),
-				"authorUsername":  authorUsername,
-				"role":            authorRole,
-				"turnCount":       strconv.Itoa(turnCount),
-				"timeLimitStatus": timeLimitStatus,
-				"turnDice":        turnDice,
-				"diceSum":         Purple + strconv.Itoa(diceSum) + Reset,
-			})
-		fmt.Println(s)
-		postCount++
-
-		// Check if both players have posted, indicating a turn
-		if playerPostCount[player1] > 0 && playerPostCount[player2] > 0 {
-			turnCount++
-			playerPostCount[player1] = 0
-			playerPostCount[player2] = 0
-		}
+func generatePotionFailedReport(postPlayerName string, report *PotionClubReport) {
+	if postPlayerName == report.Player1.Name {
+		report.Score.ReportFailed.PenalizedPlayer = report.Player1.Name
+		report.Score.ReportFailed.PenalizedPlayerHouse = parser.HouseNameWithColor[report.Player1.House]
+		report.Score.ReportFailed.RewardedPlayer = report.Player2.Name
+		report.Score.ReportFailed.RewardedPlayerHouse = parser.HouseNameWithColor[report.Player2.House]
+	} else {
+		report.Score.ReportFailed.PenalizedPlayer = report.Player2.Name
+		report.Score.ReportFailed.PenalizedPlayerHouse = parser.HouseNameWithColor[report.Player2.House]
+		report.Score.ReportFailed.RewardedPlayer = report.Player1.Name
+		report.Score.ReportFailed.RewardedPlayerHouse = parser.HouseNameWithColor[report.Player1.House]
+	}
+	turnsPlayed := report.Turns[len(report.Turns)-1].Number
+	if turnsPlayed <= 3 {
+		report.Score.ReportFailed.RewardedPlayerGoldAmount = 200
+		report.Score.ReportFailed.RewardedPlayerHousePoints = 100
+	} else if turnsPlayed <= 6 {
+		report.Score.ReportFailed.RewardedPlayerGoldAmount = 250
+		report.Score.ReportFailed.RewardedPlayerHousePoints = 150
+	} else if turnsPlayed <= 9 {
+		report.Score.ReportFailed.RewardedPlayerGoldAmount = 300
+		report.Score.ReportFailed.RewardedPlayerHousePoints = 200
 	}
 }
 
-*/
+func generatePotionSuccessReport(report *PotionClubReport) {
+	report.Score.ReportSucced = ModMsgPotionSuccessData{
+		DiceScoreSum:      report.Score.DiceScoreSum,
+		ModeratorMalus:    report.Score.ModeratorMalus,
+		ModeratorBonus:    report.Score.ModeratorBonus,
+		PlayersTotalBonus: report.Score.PlayersTotalBonus,
+		TotalScore:        report.Score.TotalScore,
+		TargetScore:       report.Score.TargetScore,
+		Player1:           report.Player1.Name,
+		Player2:           report.Player2.Name,
+		PotionIcon:        PotionIcons[report.Potion.Name],
+		Player1House:      parser.HouseNameWithColor[report.Player1.House],
+		Player2House:      parser.HouseNameWithColor[report.Player2.House],
+	}
+}
+
+func generateModMessage(r PotionClubReport) string {
+	var templateFile string
+	var data interface{}
+	if r.Score.Success {
+		templateFile = "internal/hogwartsforum/dynamics/potion/potionTemplates/potionSuccess.html"
+		data = r.Score.ReportSucced
+	} else {
+		templateFile = "internal/hogwartsforum/dynamics/potion/potionTemplates/potionFailed.html"
+		data = r.Score.ReportFailed
+	}
+
+	// Parse the selected template
+	tmpl, err := template.ParseFiles(templateFile)
+	util.Panic(err)
+
+	// Execute the template with the report data
+	var out bytes.Buffer
+	err = tmpl.Execute(&out, data)
+	util.Panic(err)
+
+	return out.String()
+}

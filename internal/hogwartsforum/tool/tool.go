@@ -120,7 +120,8 @@ func (o *Tool) processPotionsThread(thread parser.Thread, timeLimit, turnLimit i
 	fmt.Println("Thread: " + conf.Purple + thread.Title + conf.Reset + " (Time: " + strconv.Itoa(timeLimit) + "| Turn: " + strconv.Itoa(turnLimit) + ")" + "\n")
 	var report potion.PotionClubReport
 	daysOff := o.getGoogleSheetPotionsDayOff()
-	report = potion.PotionGetReportFromThread(thread, timeLimit, turnLimit, o.ForumDateTime, daysOff)
+	playerBonus := o.getGoogleSheetPotionsBonus()
+	report = potion.PotionGetReportFromThread(thread, timeLimit, turnLimit, o.ForumDateTime, daysOff, playerBonus)
 	fmt.Println("\n")
 	fmt.Println("=== Potion Thread End === \n")
 	return report
@@ -190,10 +191,17 @@ func (o *Tool) processChronoMainThread(chronoMainThread parser.Thread, hrTool *T
 }
 
 func (o *Tool) getGoogleSheetPotionsDayOff() *[]gsheet.DayOff {
-	rows, err := gsheet.ReadSheetData(o.SheetService, *o.Config.GSheetId, "Permisos Pociones!A269:B")
+	rows, err := gsheet.ReadSheetData(o.SheetService, *o.Config.GSheetId, gsheet.SheetRangeDaysOff)
 	util.Panic(err)
 	daysOff := gsheet.ParseDayOff(rows)
 	return &daysOff
+}
+
+func (o *Tool) getGoogleSheetPotionsBonus() *[]gsheet.PlayerBonus {
+	rows, err := gsheet.ReadSheetData(o.SheetService, *o.Config.GSheetId, gsheet.SheetRangePlayerBonus)
+	util.Panic(err)
+	playerBonus := gsheet.ParsePlayerBonus(rows)
+	return &playerBonus
 }
 
 func (o *Tool) ProcessPotionsSubforumList(subForumUrls *[]string, timeLimit, turnLimit *int) []potion.PotionClubReport {

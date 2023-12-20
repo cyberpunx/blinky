@@ -9,15 +9,16 @@
     import Settings from './lib/components/Settings.svelte';
     import TopNavBar from './lib/components/TopNavBar.svelte';
     import Footer from './lib/components/Footer.svelte';
+    import {GetConfig} from '../wailsjs/go/main/App'
+    import {GetTool} from '../wailsjs/go/main/App'
+    import {onMount} from "svelte";
 
     let isLogin = false
     let selectedMenu = "login";
     let username = "";
     let initials = "";
-    let config
-    let tool
-
-
+    let config = GetConfig()
+    let tool = GetTool()
 
 </script>
 <svelte:head>
@@ -45,8 +46,9 @@
                bind:redirectAfterLogin={selectedMenu} bind:username={username} bind:initials={initials}/>
     {/if}
     </El>
-
-    <Footer />
+    {#await tool then tool}
+        <Footer {tool}/>
+    {/await}
 </main>
 
 <style>
