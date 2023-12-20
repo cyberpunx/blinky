@@ -17,3 +17,8 @@ export function getUserColorByHouse(house){
     }
 }
 
+export function pickRandomColor(){
+    const colors = ["primary", "secondary", "success", "danger", "warning", "info", "light", "blue", "azure", "indigo", "purple", "pink", "red", "orange", "yellow", "lime","green", "teal", "cyan", "facebook", "twitter", "google", "vimeo", "linkedin", "dribble", "instagram" ,"pinterest", "vk", "rss", "flickr", "bitbucket", "tabler"];
+    return colors[Math.floor(Math.random() * colors.length)];
+
+}
