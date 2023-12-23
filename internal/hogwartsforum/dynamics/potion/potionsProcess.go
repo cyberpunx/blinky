@@ -20,10 +20,14 @@ const (
 	Moderator = "Moderator"
 	Other     = "Moderator"
 
-	StatusSuccess        Status = "Success"
-	StatusFail           Status = "Fail"
-	StatusWaitingPlayer1 Status = "WaitingPlayer1"
-	StatusWaitingPlayer2 Status = "WaitingPlayer2"
+	StatusSuccess                Status = "Success"
+	StatusFail                   Status = "Fail"
+	StatusWaitingPlayer1         Status = "WaitingPlayer1"
+	StatusWaitingPlayer2         Status = "WaitingPlayer2"
+	StatusWaitingPlayer1OnDayOff Status = "WaitingPlayer1OnDayOff"
+	StatusWaitingPlayer2OnDayOff Status = "WaitingPlayer2OnDayOff"
+
+	DayOffExtraHours = 24
 )
 
 type Status string
@@ -208,21 +212,21 @@ func identifyRolesOnThread(thread parser.Thread) (player1 PotionsUser, player2 P
 func isPlayer(post parser.Post, player1, player2 PotionsUser) bool {
 	return post.Author.Username == player1.Name || post.Author.Username == player2.Name
 }
-func findPlayerAndRole(username string, player1, player2, moderator PotionsUser, others []PotionsUser) (*PotionsUser, string) {
+func findPlayerAndRole(username string, player1, player2, moderator PotionsUser, others []PotionsUser) (*PotionsUser, string, *PotionsUser) {
 	if username == player1.Name {
-		return &player1, player1.Role
+		return &player1, player1.Role, &player2
 	} else if username == player2.Name {
-		return &player2, player2.Role
+		return &player2, player2.Role, &player1
 	} else if username == moderator.Name {
-		return &moderator, moderator.Role
+		return &moderator, moderator.Role, nil
 	} else {
 		for _, otherUser := range others {
 			if username == otherUser.Name {
-				return &otherUser, otherUser.Role
+				return &otherUser, otherUser.Role, nil
 			}
 		}
 	}
-	return nil, ""
+	return nil, "", nil
 }
 func removeOtherPostsFromThread(player1 PotionsUser, player2 PotionsUser, moderator PotionsUser, other []PotionsUser, thread parser.Thread) parser.Thread {
 	var threadWithoutOthers parser.Thread
@@ -312,7 +316,8 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 
 	for _, post := range threadWithoutOthers.Posts {
 		postUser := post.Author.Username
-		postPlayer, postRole := findPlayerAndRole(postUser, player1, player2, moderator, others)
+		postPlayer, postRole, notPostPlayer := findPlayerAndRole(postUser, player1, player2, moderator, others)
+
 		isPlayerFlag := postPlayer.Name == player1.Name || postPlayer.Name == player2.Name
 		dayOffUsed := false
 
@@ -331,7 +336,10 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 				// check for player day off on google sheet and if it's within the time limit
 				playerDayOff := gsheet.FindDayOffForPLayerBetweenDates(daysOff, postPlayer.Name, lastPostTime, dateLimit)
 				if playerDayOff != nil {
-					dayOffUsed = true
+					// check again considering the extra hours of day off
+					if util.IsDateWithinTimeLimit(*post.Created, lastPostTime, timeThreshold+time.Hour*DayOffExtraHours) {
+						dayOffUsed = true
+					}
 				}
 			}
 
@@ -364,17 +372,27 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 
 		if threadLastPost.Id == post.Id && isPlayerFlag {
 			elapsedTime := forumDateTime.Sub(*post.Created)
+			dateLimit := lastPostTime.Add(timeThreshold)
 			if elapsedTime > timeThreshold {
-				fmt.Println(config.Red+"Time Passed: "+config.Reset, elapsedTime)
-				result.Status = StatusFail
-				result.Score.Success = false
-				result.Score.TargetScore = potion.TargetScore
-				if postPlayer.Name == player1.Name {
-					generatePotionFailedReport(player2.Name, &result)
+				// check for player day off on google sheet and if it's within the time limit
+				playerDayOff := gsheet.FindDayOffForPLayerBetweenDates(daysOff, notPostPlayer.Name, lastPostTime, dateLimit)
+				if playerDayOff != nil {
+					// check again considering the extra hours of day off
+					if elapsedTime < timeThreshold+time.Hour*DayOffExtraHours {
+						if notPostPlayer.Name == player1.Name {
+							result.Status = StatusWaitingPlayer1OnDayOff
+						} else {
+							result.Status = StatusWaitingPlayer2OnDayOff
+						}
+					}
 				} else {
-					generatePotionFailedReport(player1.Name, &result)
+					fmt.Println(config.Red+"Time Passed: "+config.Reset, elapsedTime)
+					result.Status = StatusFail
+					result.Score.Success = false
+					result.Score.TargetScore = potion.TargetScore
+					generatePotionFailedReport(notPostPlayer.Name, &result)
+					result.Score.ModMessage = generateModMessage(result)
 				}
-				result.Score.ModMessage = generateModMessage(result)
 			} else {
 				fmt.Println(config.Green+"Time Passed: "+config.Reset, elapsedTime)
 			}

@@ -121,8 +121,12 @@
                 return 'light';
             case 'WaitingPlayer2':
                 return 'light';
-            default:
+            case 'WaitingPlayer1OnDayOff':
                 return 'yellow';
+            case 'WaitingPlayer2OnDayOff':
+                return 'yellow';
+            default:
+                return 'info';
         }
     }
 
@@ -151,6 +155,18 @@
                     return `Esperando a <span style="color: var(${p2color})">${player2}</span>`;
                 }else{
                     return `Esperando a Jugador 2`;
+                }
+            case 'WaitingPlayer1OnDayOff':
+                if (player1 !=="") {
+                    return `Esperando a <span style="color: var(${p1color})">${player1}</span> (Permiso)`;
+                }else{
+                    return `Esperando a Jugador 1 (Permiso)`;
+                }
+            case 'WaitingPlayer2OnDayOff':
+                if (player2 !=="") {
+                    return `Esperando a <span style="color: var(${p2color})">${player2}</span> (Permiso)`;
+                }else{
+                    return `Esperando a Jugador 2 (Permiso)`;
                 }
             default:
                 return 'Desconocido';
@@ -191,6 +207,11 @@
         let h,m,s;
         h = Math.floor(elapsedTime/1000/60/60);
         m = Math.floor((elapsedTime/1000/60/60 - h)*60);
+
+        if (thread['Status'] === "WaitingPlayer1OnDayOff" || thread['Status'] === "WaitingPlayer2OnDayOff") {
+            return `${h}h ${m}m (Permiso)`;
+        }
+
         return `${h}h ${m}m`;
 
     }
