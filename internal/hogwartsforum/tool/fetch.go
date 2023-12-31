@@ -87,10 +87,67 @@ func LoginAndGetCookies(user, pass string) (*http.Client, *LoginResponse) {
 	return client, &loginResponse
 }
 
+func (o *Tool) PostNewThread(subforumId, subject, message string, notify, attachSig bool) {
+	fmt.Println("Posting New Topic: " + config.Purple + subject + config.Reset + " on subforum " + config.Purple + subforumId + config.Reset)
+
+	attachSigStr := "on"
+	if !attachSig {
+		attachSigStr = "off"
+	}
+
+	notifyStr := "on"
+	if !notify {
+		notifyStr = "off"
+	}
+
+	data := url.Values{
+		"attach_sig": {attachSigStr},
+		"notify":     {notifyStr},
+		"subject":    {subject},
+		"message":    {message},
+		"post":       {"Enviar"},
+		"f":          {subforumId},
+		"lt":         {"0"},
+		"mode":       {"newtopic"},
+		"auth[]":     {*o.PostSecret1},
+	}
+	data.Add("auth[]", *o.PostSecret2)
+
+	queryValues := url.Values{}
+	queryValues.Add("f", subforumId)
+	queryValues.Add("mode", "newtopic")
+
+	baseDomain := *o.Config.BaseUrl
+
+	fullUrl := baseDomain + "post?" + queryValues.Encode()
+	req, err := http.NewRequest(http.MethodPost, fullUrl, strings.NewReader(data.Encode()))
+	util.Panic(err)
+
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := o.Client.Do(req)
+	util.Panic(err)
+	defer resp.Body.Close()
+	util.PrintResponseStatus(resp.Status)
+
+	body, err := ioutil.ReadAll(resp.Body)
+	util.Panic(err)
+
+	success, postUrl := parser.IsPostSuccessful(string(body))
+	if !success {
+		fmt.Println(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Could not post new topic")
+	} else {
+		fmt.Println(config.Green + config.CheckEmoji + " New Topic Posted OK " + config.Reset)
+		fmt.Println("New Topic URL: " + config.Purple + postUrl + config.Reset)
+	}
+
+}
+
 func (o *Tool) getSubforum(subUrl string) string {
 	fmt.Println("Getting Sub: " + config.Purple + subUrl + config.Reset)
 
-	req, err := http.NewRequest("GET", "https://www.hogwartsrol.com/"+subUrl, nil)
+	baseDomain := *o.Config.BaseUrl
+	req, err := http.NewRequest("GET", baseDomain+subUrl, nil)
 	util.Panic(err)
 
 	resp, err := o.Client.Do(req)
@@ -107,7 +164,8 @@ func (o *Tool) getSubforum(subUrl string) string {
 func (o *Tool) getForumHome() string {
 	fmt.Println("Getting Home (Get Forum Datetime): ")
 
-	req, err := http.NewRequest("GET", "https://www.hogwartsrol.com/", nil)
+	baseDomain := *o.Config.BaseUrl
+	req, err := http.NewRequest("GET", baseDomain, nil)
 	util.Panic(err)
 
 	resp, err := o.Client.Do(req)

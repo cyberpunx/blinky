@@ -435,3 +435,27 @@ func GetPostSecrets(html string) (string, string) {
 		return "", ""
 	}
 }
+
+func IsPostSuccessful(html string) (bool, string) {
+	searchString := "<p>Tu mensaje ha sido publicado con éxito"
+
+	if strings.Contains(html, searchString) {
+		reader := strings.NewReader(html)
+		doc, err := goquery.NewDocumentFromReader(reader)
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
+
+		//find <a href="/viewtopic?t=91149&amp;topic_name#471117">
+		// with text Haz click aquí para ver tu mensaje
+		var postUrl string
+		doc.Find("a").Each(func(i int, s *goquery.Selection) {
+			if s.Text() == "Haz click aquí para ver tu mensaje" {
+				postUrl, _ = s.Attr("href")
+			}
+		})
+		return true, postUrl
+	} else {
+		return false, ""
+	}
+}

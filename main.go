@@ -49,6 +49,13 @@ func main() {
 		endpoints := endpoint.NewEndpoints(hrTool)
 		endpoints.ConfigureAndServeEndpoints()
 
+		hrTool.PostNewThread(
+			"44", // Subforo OCIO
+			"Mensaje de prueba",
+			"loremp ipsum dolor sit amet consectetur adipiscing elit",
+			true,
+			true)
+
 		select {}
 	} else {
 		app := NewApp(db)
