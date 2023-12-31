@@ -22,3 +22,17 @@ func ParseDiceRoll(dicerolls []string) []*Dice {
 	}
 	return dices
 }
+
+func GetTandTopicNameFromViewTopicUrl(viewTopicUrl string) (string, string) {
+	// Extracting the value of 't'
+	startIndex := strings.Index(viewTopicUrl, "t=") + len("t=")
+	endIndex := strings.Index(viewTopicUrl[startIndex:], "&")
+	tValue := viewTopicUrl[startIndex : startIndex+endIndex]
+
+	// Extracting the value of 'topic_name'
+	topicNameIndex := strings.Index(viewTopicUrl, "&") + 1
+	topicNameEndIndex := strings.Index(viewTopicUrl[topicNameIndex:], "#")
+	topicName := viewTopicUrl[topicNameIndex : topicNameIndex+topicNameEndIndex]
+
+	return tValue, topicName
+}

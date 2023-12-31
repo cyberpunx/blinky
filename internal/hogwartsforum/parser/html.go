@@ -94,6 +94,43 @@ func ThreadExtractTitleAndURL(htmlFragment string) (title, url string, err error
 	return title, url, nil
 }
 
+func ThreadExtactReplyData(html string) (tid, t, lt, auth1, auth2 string, err error) {
+	reader := strings.NewReader(html)
+	doc, err := goquery.NewDocumentFromReader(reader)
+	util.Panic(err)
+
+	//find input name tid and get value
+	tid, _ = doc.Find("input[name='tid']").Attr("value")
+
+	//find input name t and get value
+	t, _ = doc.Find("input[name='t']").Attr("value")
+
+	//find input name lt and get value
+	lt, _ = doc.Find("input[name='lt']").Attr("value")
+
+	var secrets []string
+	doc.Find("input[name='auth[]']").Each(func(i int, s *goquery.Selection) {
+		//get the value of the input
+		secret := s.AttrOr("value", "")
+		secrets = append(secrets, secret)
+	})
+
+	auth1 = ""
+	auth2 = ""
+	if len(secrets) == 2 {
+		auth1 = secrets[0]
+		auth2 = secrets[1]
+	}
+
+	// if all values are not empty, return them
+	if tid != "" && t != "" && lt != "" && auth1 != "" && auth2 != "" {
+		return tid, t, lt, auth1, auth2, nil
+	} else {
+		return "", "", "", "", "", fmt.Errorf("could not extract reply data")
+	}
+
+}
+
 func ThreadListPosts(html string) []string {
 	var posts []string
 
@@ -448,13 +485,20 @@ func IsPostSuccessful(html string) (bool, string) {
 
 		//find <a href="/viewtopic?t=91149&amp;topic_name#471117">
 		// with text Haz click aquí para ver tu mensaje
-		var postUrl string
+		var urlRedirect string
 		doc.Find("a").Each(func(i int, s *goquery.Selection) {
 			if s.Text() == "Haz click aquí para ver tu mensaje" {
-				postUrl, _ = s.Attr("href")
+				urlRedirect, _ = s.Attr("href")
 			}
 		})
-		return true, postUrl
+
+		//post url is /viewtopic?t=91150&topic_name#471125, extract the value of t
+		postUrl := strings.Split(urlRedirect, "t=")[1]
+		postUrl = strings.Split(postUrl, "&")[0]
+		postUrl = strings.TrimSpace(postUrl)
+		postUrl = "t" + postUrl
+
+		return true, urlRedirect
 	} else {
 		return false, ""
 	}

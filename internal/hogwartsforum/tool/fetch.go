@@ -87,7 +87,7 @@ func LoginAndGetCookies(user, pass string) (*http.Client, *LoginResponse) {
 	return client, &loginResponse
 }
 
-func (o *Tool) PostNewThread(subforumId, subject, message string, notify, attachSig bool) {
+func (o *Tool) PostNewThread(subforumId, subject, message string, notify, attachSig bool) (*parser.Thread, error) {
 	fmt.Println("Posting New Topic: " + config.Purple + subject + config.Reset + " on subforum " + config.Purple + subforumId + config.Reset)
 
 	attachSigStr := "on"
@@ -133,14 +133,83 @@ func (o *Tool) PostNewThread(subforumId, subject, message string, notify, attach
 	body, err := ioutil.ReadAll(resp.Body)
 	util.Panic(err)
 
-	success, postUrl := parser.IsPostSuccessful(string(body))
+	success, viewTopicUrl := parser.IsPostSuccessful(string(body))
 	if !success {
 		fmt.Println(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Could not post new topic")
+		return nil, fmt.Errorf("Could not post new topic")
 	} else {
-		fmt.Println(config.Green + config.CheckEmoji + " New Topic Posted OK " + config.Reset)
-		fmt.Println("New Topic URL: " + config.Purple + postUrl + config.Reset)
+		fmt.Println(config.Green + config.CheckEmoji + config.Reset + " New Topic Posted OK: " + config.Green + viewTopicUrl + config.Reset)
+		t, topic_name := parser.GetTandTopicNameFromViewTopicUrl(viewTopicUrl)
+		threadBody := o.getThreadByViewTopic(t, topic_name)
+		thread := o.parseThread(threadBody)
+		fmt.Println("New Topic URL: " + config.Green + thread.Url + config.Reset)
+		return thread, nil
+	}
+}
+
+func (o *Tool) ReplyThread(threadUrl, message string, notify, attachSig bool) (*parser.Thread, error) {
+
+	threadBody := o.getThread(threadUrl)
+	threadTitle, _, err := parser.ThreadExtractTitleAndURL(threadBody)
+	fmt.Println("Replying on topic: " + config.Purple + threadTitle + config.Reset)
+	tid, t, lt, auth1, auth2, err := parser.ThreadExtactReplyData(threadBody)
+
+	attachSigStr := "1"
+	if !attachSig {
+		attachSigStr = "0"
 	}
 
+	notifyStr := "1"
+	if !notify {
+		notifyStr = "0"
+	}
+
+	data := url.Values{
+		"attach_sig": {attachSigStr},
+		"notify":     {notifyStr},
+		"message":    {message},
+		"post":       {"Enviar"},
+		"t":          {t},
+		"lt":         {lt},
+		"tid":        {tid},
+		"mode":       {"reply"},
+		"auth[]":     {auth1},
+	}
+	data.Add("auth[]", auth2)
+
+	queryValues := url.Values{}
+	queryValues.Add("t", t)
+	queryValues.Add("mode", "reply")
+
+	baseDomain := *o.Config.BaseUrl
+
+	fullUrl := baseDomain + "post?" + queryValues.Encode()
+	req, err := http.NewRequest(http.MethodPost, fullUrl, strings.NewReader(data.Encode()))
+	util.Panic(err)
+
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := o.Client.Do(req)
+	util.Panic(err)
+	defer resp.Body.Close()
+	util.PrintResponseStatus(resp.Status)
+
+	body, err := ioutil.ReadAll(resp.Body)
+	util.Panic(err)
+
+	success, viewTopicUrl := parser.IsPostSuccessful(string(body))
+	if !success {
+		fmt.Println(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Could not reply topic")
+		return nil, fmt.Errorf("Could not reply topic")
+	} else {
+		fmt.Println(config.Green + config.CheckEmoji + config.Reset + " New Reply Posted OK: " + config.Green + viewTopicUrl + config.Reset)
+		t, topic_name := parser.GetTandTopicNameFromViewTopicUrl(viewTopicUrl)
+		threadBody := o.getThreadByViewTopic(t, topic_name)
+		thread := o.parseThread(threadBody)
+		lastPost := thread.Posts[len(thread.Posts)-1]
+		fmt.Println("New Topic URL: " + config.Green + lastPost.Url + config.Reset)
+		return thread, nil
+	}
 }
 
 func (o *Tool) getSubforum(subUrl string) string {
@@ -189,6 +258,26 @@ func (o *Tool) getThread(threadUrl string) string {
 		threadUrl = baseDomain + threadUrl
 	}
 
+	req, err := http.NewRequest("GET", threadUrl, nil)
+	util.Panic(err)
+
+	resp, err := o.Client.Do(req)
+	util.Panic(err)
+	defer resp.Body.Close()
+	util.PrintResponseStatus(resp.Status)
+
+	body, err := ioutil.ReadAll(resp.Body)
+	util.Panic(err)
+
+	return string(body)
+}
+
+func (o *Tool) getThreadByViewTopic(threadId, postId string) string {
+	fmt.Println("Getting Thread viewtopic: " + config.Purple + threadId + config.Reset)
+
+	baseDomain := *o.Config.BaseUrl
+
+	threadUrl := baseDomain + "/viewtopic?t=" + threadId + "&topic_name#" + postId
 	req, err := http.NewRequest("GET", threadUrl, nil)
 	util.Panic(err)
 

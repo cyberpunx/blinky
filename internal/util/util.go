@@ -165,3 +165,7 @@ func IsDateWithinTimeLimit(currentTime, lastPostTime time.Time, timeThreshold ti
 		return true
 	}
 }
+
+func Sleep(seconds int) {
+	time.Sleep(time.Duration(seconds) * time.Second)
+}

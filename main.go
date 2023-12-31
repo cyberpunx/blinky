@@ -49,12 +49,25 @@ func main() {
 		endpoints := endpoint.NewEndpoints(hrTool)
 		endpoints.ConfigureAndServeEndpoints()
 
-		hrTool.PostNewThread(
+		thread, err := hrTool.PostNewThread(
 			"44", // Subforo OCIO
 			"Mensaje de prueba",
 			"loremp ipsum dolor sit amet consectetur adipiscing elit",
 			true,
 			true)
+		util.Panic(err)
+
+		//sleep for 5 seconds to avoid spam detection
+		util.Sleep(5)
+
+		threadReplied, err := hrTool.ReplyThread(
+			thread.Url,
+			"respuesta auto generada",
+			true,
+			true)
+		util.Panic(err)
+
+		fmt.Println("Thread replied: " + config.Purple + threadReplied.Url + config.Reset + "\n")
 
 		select {}
 	} else {
