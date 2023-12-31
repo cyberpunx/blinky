@@ -165,6 +165,8 @@ func (o *Tool) GetPostSecrets() (string, string) {
 	if secret1 == "" || secret2 == "" {
 		fmt.Println(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Could not get post secrets")
 		os.Exit(1)
+	} else {
+		fmt.Println(config.Green + config.CheckEmoji + " Secrets Obtained OK " + config.Reset)
 	}
 
 	return secret1, secret2
