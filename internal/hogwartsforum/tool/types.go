@@ -25,6 +25,8 @@ type Tool struct {
 	Client        *http.Client
 	SheetService  *sheets.Service
 	ForumDateTime time.Time
+	PostSecret1   *string
+	PostSecret2   *string
 }
 
 func NewTool(config *config.Config, client *http.Client, gSheetService *sheets.Service) *Tool {

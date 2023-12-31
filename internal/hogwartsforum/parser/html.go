@@ -413,3 +413,25 @@ func GetPotionPlayerProfileUrl(html string) string {
 	player1 := doc.Find("div.postbody").First().Find("strong").First().Text()
 	return player1
 }
+
+func GetPostSecrets(html string) (string, string) {
+	reader := strings.NewReader(html)
+	doc, err := goquery.NewDocumentFromReader(reader)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	//find the input with name "auth[]"
+	var secrets []string
+	doc.Find("input[name='auth[]']").Each(func(i int, s *goquery.Selection) {
+		//get the value of the input
+		secret := s.AttrOr("value", "")
+		secrets = append(secrets, secret)
+	})
+
+	if len(secrets) == 2 {
+		return secrets[0], secrets[1]
+	} else {
+		return "", ""
+	}
+}

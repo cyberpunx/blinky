@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -142,4 +143,29 @@ func (o *Tool) getThread(threadUrl string) string {
 	util.Panic(err)
 
 	return string(body)
+}
+
+func (o *Tool) GetPostSecrets() (string, string) {
+	fmt.Println("Getting Post Secrets: ")
+	baseDomain := *o.Config.BaseUrl
+	postUrl := baseDomain + "/post?f=44&mode=newtopic"
+
+	req, err := http.NewRequest("GET", postUrl, nil)
+	util.Panic(err)
+
+	resp, err := o.Client.Do(req)
+	util.Panic(err)
+	defer resp.Body.Close()
+	util.PrintResponseStatus(resp.Status)
+
+	body, err := ioutil.ReadAll(resp.Body)
+	util.Panic(err)
+
+	secret1, secret2 := parser.GetPostSecrets(string(body))
+	if secret1 == "" || secret2 == "" {
+		fmt.Println(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Could not get post secrets")
+		os.Exit(1)
+	}
+
+	return secret1, secret2
 }

@@ -18,7 +18,7 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-const DEBUG = false
+const DEBUG = true
 
 func main() {
 	//logpanic.InitPanicFile()
@@ -38,6 +38,10 @@ func main() {
 		}
 		sheetService := gsheet.GetSheetService(*conf.GSheetTokenFile, *conf.GSheetCredFile)
 		hrTool := tool.NewTool(conf, client, sheetService)
+		secret1, secret2 := hrTool.GetPostSecrets()
+		hrTool.PostSecret1 = &secret1
+		hrTool.PostSecret2 = &secret2
+
 		forumDateTime, err := util.GetTimeFromTimeZone("America/Mexico_City")
 		util.Panic(err)
 		fmt.Println("Forum Datetime: " + config.Purple + forumDateTime.Format("01/02/2006 15:04") + config.Reset + "\n")
