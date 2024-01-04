@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
 
 func LoginAndGetCookies(user, pass string) (*http.Client, *LoginResponse) {
@@ -77,11 +78,13 @@ func LoginAndGetCookies(user, pass string) (*http.Client, *LoginResponse) {
 	username := parser.GetUsername(string(body))
 	fmt.Println("Bienvenido: " + config.Green + username + config.Reset)
 	initials := util.GetInitials(username)
+	timestamp := time.Now()
 	loginResponse = LoginResponse{
 		Success:  util.PBool(true),
 		Messaage: &msg,
 		Username: &username,
 		Initials: &initials,
+		Datetime: &timestamp,
 	}
 
 	return client, &loginResponse

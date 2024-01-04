@@ -9,6 +9,7 @@ import (
 	"localdev/HrHelper/internal/gsheet"
 	"localdev/HrHelper/internal/hogwartsforum/tool"
 	"localdev/HrHelper/internal/storage"
+	"localdev/HrHelper/internal/util"
 )
 
 // App struct
@@ -45,6 +46,7 @@ func (a *App) Login(user, pass string, remeber bool) *tool.LoginResponse {
 		fmt.Println("Not logged in. Exiting...")
 		return loginResponse
 	}
+	gsheet.ReadSheetData(a.tool.SheetService, gsheet.LogSheetId, gsheet.SheetRangeLogins)
 
 	if remeber {
 		config.Username = &user
@@ -57,6 +59,14 @@ func (a *App) Login(user, pass string, remeber bool) *tool.LoginResponse {
 	storage.UpdateConfig(a.db, config)
 
 	sheetService := gsheet.GetSheetService(*config.GSheetTokenFile, *config.GSheetCredFile)
+
+	// Register the User at the Login Sheet {Username, Datetime}
+	nextRow, err := gsheet.FindNextAvailableRow(sheetService, gsheet.LogSheetId, gsheet.SheetRangeLogins)
+	util.Panic(err)
+	newRowData := []interface{}{loginResponse.Username, loginResponse.Datetime.Format("01/02/2006 15:04")}
+	writeRange := fmt.Sprintf("Logins!A%d:B%d", nextRow, nextRow)
+	err = gsheet.WriteSheetData(sheetService, gsheet.LogSheetId, writeRange, newRowData)
+	util.Panic(err)
 
 	hrTool := tool.NewTool(config, client, sheetService)
 	a.tool = hrTool

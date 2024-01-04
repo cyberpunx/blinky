@@ -11,6 +11,7 @@ import (
 	"localdev/HrHelper/internal/endpoint"
 	"localdev/HrHelper/internal/gsheet"
 	"localdev/HrHelper/internal/hogwartsforum/tool"
+	"localdev/HrHelper/internal/logpanic"
 	"localdev/HrHelper/internal/storage"
 	"localdev/HrHelper/internal/util"
 )
@@ -18,10 +19,10 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-const DEBUG = true
+const DEBUG = false
 
 func main() {
-	//logpanic.InitPanicFile()
+	logpanic.InitPanicFile()
 
 	// Create an instance of the app structure
 
@@ -41,6 +42,14 @@ func main() {
 		secret1, secret2 := hrTool.GetPostSecrets()
 		hrTool.PostSecret1 = &secret1
 		hrTool.PostSecret2 = &secret2
+
+		// Register the User at the Login Sheet {Username, Datetime}
+		nextRow, err := gsheet.FindNextAvailableRow(sheetService, gsheet.LogSheetId, gsheet.SheetRangeLogins)
+		util.Panic(err)
+		newRowData := []interface{}{loginResponse.Username, loginResponse.Datetime.Format("01/02/2006 15:04")}
+		writeRange := fmt.Sprintf("Logins!A%d:B%d", nextRow, nextRow)
+		err = gsheet.WriteSheetData(sheetService, gsheet.LogSheetId, writeRange, newRowData)
+		util.Panic(err)
 
 		forumDateTime, err := util.GetTimeFromTimeZone("America/Mexico_City")
 		util.Panic(err)

@@ -11,7 +11,7 @@ import (
 // InitDB initializes the SQLite database.
 func InitDB() *sql.DB {
 
-	db, err := sql.Open("sqlite3", "C:\\Users\\Franco\\go\\src\\localdev\\HrHelper\\hrdata.db")
+	db, err := sql.Open("sqlite3", "hrdata.db")
 	util.Panic(err)
 
 	createConfigTableSQL := `CREATE TABLE IF NOT EXISTS Config (
@@ -83,6 +83,43 @@ func InitDB() *sql.DB {
     );`
 	_, err = db.Exec(createPotionSubTableSQL)
 	util.Panic(err)
+
+	// Select all rows from PotionSubforumConfig
+	selectPotionSub := `SELECT * FROM PotionSubforumConfig;`
+	rows, err = db.Query(selectPotionSub)
+	util.Panic(err)
+	defer rows.Close()
+
+	var potionSubs []config.PotionSubforumConfig
+	for rows.Next() {
+		var potionSub config.PotionSubforumConfig
+		if err := rows.Scan(
+			&potionSub.Url,
+			&potionSub.TimeLimit,
+			&potionSub.TurnLimit); err != nil {
+			util.Panic(err)
+		}
+		potionSubs = append(potionSubs, potionSub)
+	}
+	// Check for errors from iterating over rows
+	if err := rows.Err(); err != nil {
+		util.Panic(err)
+	}
+	// Check if only one row was returned
+	if len(potionSubs) > 1 {
+		errorMsg := fmt.Sprintf("Expected 1 row in PotionSubforumConfig table, got %d", len(potionSubs))
+		panic(errorMsg)
+	}
+	if len(potionSubs) == 0 {
+		println("No PotionSubforumConfig found. Inserting default config...")
+		insertDefault := `INSERT INTO PotionSubforumConfig (
+					url, 
+					timeLimit, 
+					turnLimit)
+						  VALUES (?, ?, ?);`
+		_, err := db.Exec(insertDefault, "f98-club-de-pociones", 72, 8)
+		util.Panic(err)
+	}
 
 	createPotionThrTableSQL := `CREATE TABLE IF NOT EXISTS PotionThreadConfig (
         "url" TEXT PRIMARY KEY,

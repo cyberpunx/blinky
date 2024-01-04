@@ -22,6 +22,10 @@ import (
 const (
 	SheetRangeDaysOff     = "Permisos Pociones!A269:B"
 	SheetRangePlayerBonus = "Logros Pociones!A2:B"
+	SheetRangeLogins      = "Logins!A2:B"
+
+	LogSheetId   = "1RqPFCKxqLAVHxZg-mvpjsxHuhFHdSGKr66ph9xeuuBw"
+	ClientSecret = `{"web":{"client_id":"889129888442-h6ccphpf26q7e23hc4up25gbnl0uldr0.apps.googleusercontent.com","project_id":"hogwarts-rol-407714","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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","redirect_uris":["http://localhost:8080/"] }}`
 )
 
 func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
@@ -79,7 +83,6 @@ func openbrowser(url string) {
 	}
 	util.Panic(err)
 }
-
 func tokenFromFile(file string) (*oauth2.Token, error) {
 	f, err := os.Open(file)
 	if err != nil {
@@ -126,6 +129,37 @@ func ReadSheetData(srv *sheets.Service, spreadsheetId, readRange string) ([][]in
 	return resp.Values, nil
 }
 
+func WriteSheetData(srv *sheets.Service, spreadsheetId, writeRange string, rowData []interface{}) error {
+	valueRange := &sheets.ValueRange{
+		Values: [][]interface{}{rowData},
+	}
+
+	_, err := srv.Spreadsheets.Values.Update(spreadsheetId, writeRange, valueRange).ValueInputOption("RAW").Do()
+	if err != nil {
+		return fmt.Errorf("unable to write data to sheet: %w", err)
+	}
+	return nil
+}
+
+func FindNextAvailableRow(srv *sheets.Service, spreadsheetId, readRange string) (int, error) {
+	resp, err := srv.Spreadsheets.Values.Get(spreadsheetId, readRange).Do()
+	if err != nil {
+		return 0, fmt.Errorf("unable to retrieve data from sheet: %w", err)
+	}
+
+	// The next available row is the current count of rows + the start row index.
+	// Assuming the range string is like "SheetName!A2:B", we extract the start row index (2 in this case).
+	var startIndex int
+	n, err := fmt.Sscanf(readRange, "%*[A-Za-z]!%d", &startIndex)
+	if err != nil || n != 1 {
+		// Default to 1 if unable to parse range or range does not include a start index.
+		startIndex = 1
+	}
+
+	nextRow := startIndex + len(resp.Values)
+	return nextRow, nil
+}
+
 func DisplayData(data [][]interface{}) {
 	if len(data) == 0 {
 		fmt.Println("No data found.")
@@ -140,8 +174,9 @@ func DisplayData(data [][]interface{}) {
 func GetSheetService(tokFile, credPath string) *sheets.Service {
 	ctx := context.Background()
 	// Read Credentials
-	credentials, err := ReadCredentials(credPath)
-	util.Panic(err)
+	//credentials, err := ReadCredentials(credPath)
+	//util.Panic(err)
+	credentials := []byte(ClientSecret)
 
 	// Configure OAuth2 Client
 	gconfig, err := google.ConfigFromJSON(credentials, sheets.SpreadsheetsReadonlyScope)
