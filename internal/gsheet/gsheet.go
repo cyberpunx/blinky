@@ -24,7 +24,7 @@ const (
 	SheetRangePlayerBonus = "Logros Pociones!A2:B"
 	SheetRangeLogins      = "Logins!A2:B"
 
-	LogSheetId   = "1RqPFCKxqLAVHxZg-mvpjsxHuhFHdSGKr66ph9xeuuBw"
+	LogSheetId   = "1JpvrhEFvrasUnL6qDma86uqzyIfAj8Cra5QM60Us4Jo"
 	ClientSecret = `{"web":{"client_id":"889129888442-h6ccphpf26q7e23hc4up25gbnl0uldr0.apps.googleusercontent.com","project_id":"hogwarts-rol-407714","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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","redirect_uris":["http://localhost:8080/"] }}`
 )
 
@@ -52,7 +52,7 @@ func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 
 	// Open the authorization URL in the user's browser
 	authURL := config.AuthCodeURL(state, oauth2.AccessTypeOffline)
-	fmt.Printf("Opening browser for authorization: %s\n", authURL)
+	util.LongPrintlnPrintln("Opening browser for authorization: %s\n", authURL)
 	openbrowser(authURL)
 
 	// Start the server and wait for the auth code
@@ -95,7 +95,7 @@ func tokenFromFile(file string) (*oauth2.Token, error) {
 }
 
 func saveToken(path string, token *oauth2.Token) {
-	fmt.Printf("Saving credential file to: %s\n", path)
+	util.LongPrintlnPrintln("Saving credential file to: %s\n", path)
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	util.Panic(err)
 	defer f.Close()
@@ -147,26 +147,42 @@ func FindNextAvailableRow(srv *sheets.Service, spreadsheetId, readRange string) 
 		return 0, fmt.Errorf("unable to retrieve data from sheet: %w", err)
 	}
 
-	// The next available row is the current count of rows + the start row index.
-	// Assuming the range string is like "SheetName!A2:B", we extract the start row index (2 in this case).
+	// Extract the start row index from the readRange.
 	var startIndex int
-	n, err := fmt.Sscanf(readRange, "%*[A-Za-z]!%d", &startIndex)
+	n, err := fmt.Sscanf(readRange, "%*[A-Za-z]!A%d", &startIndex)
 	if err != nil || n != 1 {
-		// Default to 1 if unable to parse range or range does not include a start index.
-		startIndex = 1
+		startIndex = 2 // Default to 2 if unable to parse range or range does not include a start index.
 	}
 
-	nextRow := startIndex + len(resp.Values)
-	return nextRow, nil
+	// Iterate over the rows to find the first blank row.
+	for i, row := range resp.Values {
+		if isRowEmpty(row) {
+			// Return the index of the first empty row.
+			return startIndex + i, nil
+		}
+	}
+
+	// If no empty row is found, return the row number after the last row.
+	return startIndex + len(resp.Values), nil
+}
+
+// Helper function to check if a row is empty.
+func isRowEmpty(row []interface{}) bool {
+	for _, cell := range row {
+		if cell != nil && cell != "" {
+			return false
+		}
+	}
+	return true
 }
 
 func DisplayData(data [][]interface{}) {
 	if len(data) == 0 {
-		fmt.Println("No data found.")
+		util.LongPrintlnPrintln("No data found.")
 	} else {
-		fmt.Println("Data:")
+		util.LongPrintlnPrintln("Data:")
 		for _, row := range data {
-			fmt.Printf("%s\n", row)
+			util.LongPrintlnPrintln("%s\n", row)
 		}
 	}
 }
@@ -179,7 +195,7 @@ func GetSheetService(tokFile, credPath string) *sheets.Service {
 	credentials := []byte(ClientSecret)
 
 	// Configure OAuth2 Client
-	gconfig, err := google.ConfigFromJSON(credentials, sheets.SpreadsheetsReadonlyScope)
+	gconfig, err := google.ConfigFromJSON(credentials, sheets.SpreadsheetsScope)
 	util.Panic(err)
 	client := GetClient(tokFile, ctx, gconfig)
 

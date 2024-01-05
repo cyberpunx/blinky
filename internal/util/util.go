@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"localdev/HrHelper/internal/config"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -33,7 +35,36 @@ func PrintResponseStatus(status string) {
 		statusColor = config.Red
 		statusEmoji = " " + config.CrossEmoji + " "
 	}
-	fmt.Println("Response Status: " + statusColor + statusEmoji + " " + status + config.Reset)
+	LongPrintlnPrintln("Response Status: " + statusColor + statusEmoji + " " + status + config.Reset)
+}
+
+func LongPrintlnPrintln(a ...any) (n int, err error) {
+	// Convert all arguments into a string slice
+	stringArgs := make([]string, len(a))
+	for i, arg := range a {
+		stringArgs[i] = fmt.Sprint(arg)
+	}
+
+	// Join all arguments into a single string
+	fullString := strings.Join(stringArgs, " ")
+
+	// Print to stdout using util.LongPrintlnPrintln
+	n, err = fmt.Println(fullString)
+	if err != nil {
+		return n, err
+	}
+
+	// Append to a log file
+	file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return n, err
+	}
+	defer file.Close()
+
+	logger := log.New(file, "", log.LstdFlags)
+	logger.Println(fullString)
+
+	return n, nil
 }
 
 func Panic(err error) {

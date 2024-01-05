@@ -2,7 +2,6 @@ package potion
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"html/template"
 	"localdev/HrHelper/internal/config"
@@ -368,7 +367,7 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 		}
 
 		s := printPostReport(isPlayerFlag, postCount, postUser, postRole, turnCount, postOnTime, dayOffUsed, postDice, diceTotal)
-		fmt.Println(s)
+		util.LongPrintlnPrintln(s)
 
 		if threadLastPost.Id == post.Id && isPlayerFlag {
 			elapsedTime := forumDateTime.Sub(*post.Created)
@@ -386,7 +385,7 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 						}
 					}
 				} else {
-					fmt.Println(config.Red+"Time Passed: "+config.Reset, elapsedTime)
+					util.LongPrintlnPrintln(config.Red+"Time Passed: "+config.Reset, elapsedTime)
 					result.Status = StatusFail
 					result.Score.Success = false
 					result.Score.TargetScore = potion.TargetScore
@@ -394,7 +393,7 @@ func PotionGetReportFromThread(rawThread parser.Thread, timeLimitHours, turnLimi
 					result.Score.ModMessage = generateModMessage(result)
 				}
 			} else {
-				fmt.Println(config.Green+"Time Passed: "+config.Reset, elapsedTime)
+				util.LongPrintlnPrintln(config.Green+"Time Passed: "+config.Reset, elapsedTime)
 			}
 		}
 

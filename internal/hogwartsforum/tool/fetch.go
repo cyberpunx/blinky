@@ -15,7 +15,7 @@ import (
 )
 
 func LoginAndGetCookies(user, pass string) (*http.Client, *LoginResponse) {
-	fmt.Println("Logging in with User: " + config.Purple + user + " " + config.Reset)
+	util.LongPrintlnPrintln("Logging in with User: " + config.Purple + user + " " + config.Reset)
 	params := url.Values{}
 	params.Add("username", user)
 	params.Add("password", pass)
@@ -66,7 +66,7 @@ func LoginAndGetCookies(user, pass string) (*http.Client, *LoginResponse) {
 	var loginResponse LoginResponse
 	isLoginCorrect, msg := parser.IsLoginCorrect(string(body))
 	if !isLoginCorrect {
-		fmt.Println(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Usuario y/o Contraseña Incorrectos ")
+		util.LongPrintlnPrintln(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Usuario y/o Contraseña Incorrectos ")
 		loginResponse = LoginResponse{
 			Success:  util.PBool(false),
 			Messaage: &msg,
@@ -76,7 +76,7 @@ func LoginAndGetCookies(user, pass string) (*http.Client, *LoginResponse) {
 		return nil, &loginResponse
 	}
 	username := parser.GetUsername(string(body))
-	fmt.Println("Bienvenido: " + config.Green + username + config.Reset)
+	util.LongPrintlnPrintln("Bienvenido: " + config.Green + username + config.Reset)
 	initials := util.GetInitials(username)
 	timestamp := time.Now()
 	loginResponse = LoginResponse{
@@ -91,7 +91,7 @@ func LoginAndGetCookies(user, pass string) (*http.Client, *LoginResponse) {
 }
 
 func (o *Tool) PostNewThread(subforumId, subject, message string, notify, attachSig bool) (*parser.Thread, error) {
-	fmt.Println("Posting New Topic: " + config.Purple + subject + config.Reset + " on subforum " + config.Purple + subforumId + config.Reset)
+	util.LongPrintlnPrintln("Posting New Topic: " + config.Purple + subject + config.Reset + " on subforum " + config.Purple + subforumId + config.Reset)
 
 	attachSigStr := "on"
 	if !attachSig {
@@ -138,14 +138,14 @@ func (o *Tool) PostNewThread(subforumId, subject, message string, notify, attach
 
 	success, viewTopicUrl := parser.IsPostSuccessful(string(body))
 	if !success {
-		fmt.Println(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Could not post new topic")
+		util.LongPrintlnPrintln(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Could not post new topic")
 		return nil, fmt.Errorf("Could not post new topic")
 	} else {
-		fmt.Println(config.Green + config.CheckEmoji + config.Reset + " New Topic Posted OK: " + config.Green + viewTopicUrl + config.Reset)
+		util.LongPrintlnPrintln(config.Green + config.CheckEmoji + config.Reset + " New Topic Posted OK: " + config.Green + viewTopicUrl + config.Reset)
 		t, topic_name := parser.GetTandTopicNameFromViewTopicUrl(viewTopicUrl)
 		threadBody := o.getThreadByViewTopic(t, topic_name)
 		thread := o.parseThread(threadBody)
-		fmt.Println("New Topic URL: " + config.Green + thread.Url + config.Reset)
+		util.LongPrintlnPrintln("New Topic URL: " + config.Green + thread.Url + config.Reset)
 		return thread, nil
 	}
 }
@@ -154,7 +154,7 @@ func (o *Tool) ReplyThread(threadUrl, message string, notify, attachSig bool) (*
 
 	threadBody := o.getThread(threadUrl)
 	threadTitle, _, err := parser.ThreadExtractTitleAndURL(threadBody)
-	fmt.Println("Replying on topic: " + config.Purple + threadTitle + config.Reset)
+	util.LongPrintlnPrintln("Replying on topic: " + config.Purple + threadTitle + config.Reset)
 	tid, t, lt, auth1, auth2, err := parser.ThreadExtactReplyData(threadBody)
 
 	attachSigStr := "1"
@@ -202,21 +202,21 @@ func (o *Tool) ReplyThread(threadUrl, message string, notify, attachSig bool) (*
 
 	success, viewTopicUrl := parser.IsPostSuccessful(string(body))
 	if !success {
-		fmt.Println(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Could not reply topic")
+		util.LongPrintlnPrintln(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Could not reply topic")
 		return nil, fmt.Errorf("Could not reply topic")
 	} else {
-		fmt.Println(config.Green + config.CheckEmoji + config.Reset + " New Reply Posted OK: " + config.Green + viewTopicUrl + config.Reset)
+		util.LongPrintlnPrintln(config.Green + config.CheckEmoji + config.Reset + " New Reply Posted OK: " + config.Green + viewTopicUrl + config.Reset)
 		t, topic_name := parser.GetTandTopicNameFromViewTopicUrl(viewTopicUrl)
 		threadBody := o.getThreadByViewTopic(t, topic_name)
 		thread := o.parseThread(threadBody)
 		lastPost := thread.Posts[len(thread.Posts)-1]
-		fmt.Println("New Topic URL: " + config.Green + lastPost.Url + config.Reset)
+		util.LongPrintlnPrintln("New Topic URL: " + config.Green + lastPost.Url + config.Reset)
 		return thread, nil
 	}
 }
 
 func (o *Tool) getSubforum(subUrl string) string {
-	fmt.Println("Getting Sub: " + config.Purple + subUrl + config.Reset)
+	util.LongPrintlnPrintln("Getting Sub: " + config.Purple + subUrl + config.Reset)
 
 	baseDomain := *o.Config.BaseUrl
 	req, err := http.NewRequest("GET", baseDomain+subUrl, nil)
@@ -234,7 +234,7 @@ func (o *Tool) getSubforum(subUrl string) string {
 }
 
 func (o *Tool) getForumHome() string {
-	fmt.Println("Getting Home (Get Forum Datetime): ")
+	util.LongPrintlnPrintln("Getting Home (Get Forum Datetime): ")
 
 	baseDomain := *o.Config.BaseUrl
 	req, err := http.NewRequest("GET", baseDomain, nil)
@@ -252,7 +252,7 @@ func (o *Tool) getForumHome() string {
 }
 
 func (o *Tool) getThread(threadUrl string) string {
-	fmt.Println("Getting Thread: " + config.Purple + threadUrl + config.Reset)
+	util.LongPrintlnPrintln("Getting Thread: " + config.Purple + threadUrl + config.Reset)
 
 	baseDomain := *o.Config.BaseUrl
 
@@ -276,7 +276,7 @@ func (o *Tool) getThread(threadUrl string) string {
 }
 
 func (o *Tool) getThreadByViewTopic(threadId, postId string) string {
-	fmt.Println("Getting Thread viewtopic: " + config.Purple + threadId + config.Reset)
+	util.LongPrintlnPrintln("Getting Thread viewtopic: " + config.Purple + threadId + config.Reset)
 
 	baseDomain := *o.Config.BaseUrl
 
@@ -296,7 +296,7 @@ func (o *Tool) getThreadByViewTopic(threadId, postId string) string {
 }
 
 func (o *Tool) GetPostSecrets() (string, string) {
-	fmt.Println("Getting Post Secrets: ")
+	util.LongPrintlnPrintln("Getting Post Secrets: ")
 	baseDomain := *o.Config.BaseUrl
 	postUrl := baseDomain + "/post?f=44&mode=newtopic"
 
@@ -313,10 +313,10 @@ func (o *Tool) GetPostSecrets() (string, string) {
 
 	secret1, secret2 := parser.GetPostSecrets(string(body))
 	if secret1 == "" || secret2 == "" {
-		fmt.Println(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Could not get post secrets")
+		util.LongPrintlnPrintln(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Could not get post secrets")
 		os.Exit(1)
 	} else {
-		fmt.Println(config.Green + config.CheckEmoji + " Secrets Obtained OK " + config.Reset)
+		util.LongPrintlnPrintln(config.Green + config.CheckEmoji + " Secrets Obtained OK " + config.Reset)
 	}
 
 	return secret1, secret2

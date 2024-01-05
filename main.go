@@ -11,7 +11,6 @@ import (
 	"localdev/HrHelper/internal/endpoint"
 	"localdev/HrHelper/internal/gsheet"
 	"localdev/HrHelper/internal/hogwartsforum/tool"
-	"localdev/HrHelper/internal/logpanic"
 	"localdev/HrHelper/internal/storage"
 	"localdev/HrHelper/internal/util"
 )
@@ -22,7 +21,7 @@ var assets embed.FS
 const DEBUG = false
 
 func main() {
-	logpanic.InitPanicFile()
+	//logpanic.InitPanicFile()
 
 	// Create an instance of the app structure
 
@@ -34,7 +33,7 @@ func main() {
 	if DEBUG {
 		client, loginResponse := tool.LoginAndGetCookies(*conf.Username, *conf.Password)
 		if !*loginResponse.Success {
-			fmt.Println("Not logged in. Exiting...")
+			util.LongPrintlnPrintln("Not logged in. Exiting...")
 			return
 		}
 		sheetService := gsheet.GetSheetService(*conf.GSheetTokenFile, *conf.GSheetCredFile)
@@ -53,7 +52,7 @@ func main() {
 
 		forumDateTime, err := util.GetTimeFromTimeZone("America/Mexico_City")
 		util.Panic(err)
-		fmt.Println("Forum Datetime: " + config.Purple + forumDateTime.Format("01/02/2006 15:04") + config.Reset + "\n")
+		util.LongPrintlnPrintln("Forum Datetime: " + config.Purple + forumDateTime.Format("01/02/2006 15:04") + config.Reset + "\n")
 
 		endpoints := endpoint.NewEndpoints(hrTool)
 		endpoints.ConfigureAndServeEndpoints()
@@ -76,7 +75,7 @@ func main() {
 			true)
 		util.Panic(err)
 
-		fmt.Println("Thread replied: " + config.Purple + threadReplied.Url + config.Reset + "\n")
+		util.LongPrintlnPrintln("Thread replied: " + config.Purple + threadReplied.Url + config.Reset + "\n")
 
 		select {}
 	} else {

@@ -2,8 +2,8 @@ package endpoint
 
 import (
 	"encoding/json"
-	"fmt"
 	"localdev/HrHelper/internal/hogwartsforum/tool"
+	"localdev/HrHelper/internal/util"
 	"net/http"
 )
 
@@ -73,7 +73,7 @@ func (o *Endpoints) ConfigureAndServeEndpoints() {
 		}
 	}()
 
-	fmt.Println("Server HTTP listening on port " + ServerPort + "")
+	util.LongPrintlnPrintln("Server HTTP listening on port " + ServerPort + "")
 }
 
 func NewEndpoints(tool *tool.Tool) *Endpoints {

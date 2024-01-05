@@ -20,3 +20,4 @@ package-lock.json
 client_secret.json
 token.json
 /panic.log
+log.txt

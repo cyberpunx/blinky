@@ -137,7 +137,7 @@ func ThreadListPosts(html string) []string {
 	reader := strings.NewReader(html)
 	doc, err := goquery.NewDocumentFromReader(reader)
 	if err != nil {
-		fmt.Println("Error:", err)
+		util.LongPrintlnPrintln("Error:", err)
 		return nil
 	}
 
@@ -324,7 +324,7 @@ func PostGetDices(html string) []string {
 	reader := strings.NewReader(html)
 	doc, err := goquery.NewDocumentFromReader(reader)
 	if err != nil {
-		fmt.Println("Error:", err)
+		util.LongPrintlnPrintln("Error:", err)
 	}
 	pattern1 := `^Número aleatorio \(\d+,\d+\) : \d+$`
 	pattern2 := `^Número aleatorio \(\d+,\d+\) : \(\+\d+\) : \d+$`
@@ -353,7 +353,7 @@ func PostGetLinks(contentHtml string) []string {
 	reader := strings.NewReader(contentHtml)
 	doc, err := goquery.NewDocumentFromReader(reader)
 	if err != nil {
-		fmt.Println("Error:", err)
+		util.LongPrintlnPrintln("Error:", err)
 	}
 
 	var allLinks []string
@@ -405,7 +405,7 @@ func GetUsername(html string) string {
 	reader := strings.NewReader(html)
 	doc, err := goquery.NewDocumentFromReader(reader)
 	if err != nil {
-		fmt.Println("Error:", err)
+		util.LongPrintlnPrintln("Error:", err)
 	}
 
 	usernameLine := doc.Find("a.mainmenu").Last().Text()
@@ -420,7 +420,7 @@ func GetPotionPlayers(html string) (string, string, string, string) {
 	reader := strings.NewReader(html)
 	doc, err := goquery.NewDocumentFromReader(reader)
 	if err != nil {
-		fmt.Println("Error:", err)
+		util.LongPrintlnPrintln("Error:", err)
 	}
 	potionInfo := doc.Find("div.xxEDV").Last()
 	var player1name, player2name, player1url, player2url string
@@ -444,7 +444,7 @@ func GetPotionPlayerProfileUrl(html string) string {
 	reader := strings.NewReader(html)
 	doc, err := goquery.NewDocumentFromReader(reader)
 	if err != nil {
-		fmt.Println("Error:", err)
+		util.LongPrintlnPrintln("Error:", err)
 	}
 
 	player1 := doc.Find("div.postbody").First().Find("strong").First().Text()
@@ -455,7 +455,7 @@ func GetPostSecrets(html string) (string, string) {
 	reader := strings.NewReader(html)
 	doc, err := goquery.NewDocumentFromReader(reader)
 	if err != nil {
-		fmt.Println("Error:", err)
+		util.LongPrintlnPrintln("Error:", err)
 	}
 
 	//find the input with name "auth[]"
@@ -480,7 +480,7 @@ func IsPostSuccessful(html string) (bool, string) {
 		reader := strings.NewReader(html)
 		doc, err := goquery.NewDocumentFromReader(reader)
 		if err != nil {
-			fmt.Println("Error:", err)
+			util.LongPrintlnPrintln("Error:", err)
 		}
 
 		//find <a href="/viewtopic?t=91149&amp;topic_name#471117">

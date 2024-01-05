@@ -43,7 +43,7 @@ func (a *App) Login(user, pass string, remeber bool) *tool.LoginResponse {
 	a.tool.Client = client
 
 	if !*loginResponse.Success {
-		fmt.Println("Not logged in. Exiting...")
+		util.LongPrintlnPrintln("Not logged in. Exiting...")
 		return loginResponse
 	}
 	gsheet.ReadSheetData(a.tool.SheetService, gsheet.LogSheetId, gsheet.SheetRangeLogins)
