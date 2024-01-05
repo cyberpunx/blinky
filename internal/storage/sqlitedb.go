@@ -105,11 +105,7 @@ func InitDB() *sql.DB {
 	if err := rows.Err(); err != nil {
 		util.Panic(err)
 	}
-	// Check if only one row was returned
-	if len(potionSubs) > 1 {
-		errorMsg := fmt.Sprintf("Expected 1 row in PotionSubforumConfig table, got %d", len(potionSubs))
-		panic(errorMsg)
-	}
+
 	if len(potionSubs) == 0 {
 		println("No PotionSubforumConfig found. Inserting default config...")
 		insertDefault := `INSERT INTO PotionSubforumConfig (
