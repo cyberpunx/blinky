@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	_ "github.com/mattn/go-sqlite3"
 	"io/ioutil"
-	"localdev/HrHelper/internal/util"
 	"os"
 	"path/filepath"
 )
@@ -20,12 +19,12 @@ func LoadConfigFile(configPath string, config interface{}) string {
 		loadedPath = configPath
 		b, err = ioutil.ReadFile(filepath.Join(configPath))
 		if err != nil {
-			util.Panic(err)
+			panic(err)
 		}
 	}
 	err = json.Unmarshal(b, config)
 	if err != nil {
-		util.Panic(err)
+		panic(err)
 	}
 	return loadedPath
 }

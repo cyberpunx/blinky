@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 )
@@ -314,7 +313,8 @@ func (o *Tool) GetPostSecrets() (string, string) {
 	secret1, secret2 := parser.GetPostSecrets(string(body))
 	if secret1 == "" || secret2 == "" {
 		util.LongPrintlnPrintln(config.Red + "ERROR: " + config.CrossEmoji + config.Reset + "  Could not get post secrets")
-		os.Exit(1)
+		err := fmt.Errorf("Could not get post secrets. Closing...")
+		util.Panic(err)
 	} else {
 		util.LongPrintlnPrintln(config.Green + config.CheckEmoji + " Secrets Obtained OK " + config.Reset)
 	}

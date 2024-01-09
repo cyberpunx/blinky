@@ -10,7 +10,7 @@ const (
 	kernel32dll = "kernel32.dll"
 )
 
-const panicFile = "panic.log"
+const panicFile = "log"
 
 var globalFile *os.File
 

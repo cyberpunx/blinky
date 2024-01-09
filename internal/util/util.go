@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"localdev/HrHelper/internal/config"
 	"log"
 	"net/http"
@@ -40,17 +39,6 @@ func PrintResponseStatus(status string) {
 }
 
 func LongPrintlnPrintln(a ...any) {
-	// Redirect stderr to a buffer
-	originalStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
-
-	defer func() {
-		// Restore original stderr
-		w.Close()
-		os.Stderr = originalStderr
-	}()
-
 	// Convert all arguments into a string slice
 	stringArgs := make([]string, len(a))
 	for i, arg := range a {
@@ -65,31 +53,12 @@ func LongPrintlnPrintln(a ...any) {
 	Panic(err)
 
 	// Append to a log file
-	file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile("log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	Panic(err)
 	defer file.Close()
 
 	logger := log.New(file, "", log.LstdFlags)
 	logger.Println(RemoveUnicodeFromStr(fullString))
-
-	// Now handle stderr
-	if err := w.Close(); err != nil {
-		Panic(err)
-	}
-
-	var buf bytes.Buffer
-	if _, err := io.Copy(&buf, r); err != nil {
-		Panic(err)
-	}
-
-	stderrOutput := buf.String()
-	if stderrOutput != "" {
-		// Here you can log the stderr output
-		fmt.Fprintln(originalStderr, "Stderr:", stderrOutput)
-
-		// Also append to log file
-		logger.Println("Stderr:", RemoveUnicodeFromStr(stderrOutput))
-	}
 }
 
 func RemoveUnicodeFromStr(str string) string {

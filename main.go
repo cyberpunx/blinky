@@ -11,6 +11,7 @@ import (
 	"localdev/HrHelper/internal/endpoint"
 	"localdev/HrHelper/internal/gsheet"
 	"localdev/HrHelper/internal/hogwartsforum/tool"
+	"localdev/HrHelper/internal/logpanic"
 	"localdev/HrHelper/internal/storage"
 	"localdev/HrHelper/internal/util"
 )
@@ -21,9 +22,9 @@ var assets embed.FS
 const DEBUG = false
 
 func main() {
-	//logpanic.InitPanicFile()
+	logpanic.InitPanicFile()
 
-	// Create an instance of the app structure
+	util.LongPrintlnPrintln("Starting HrHelper...")
 
 	db := storage.InitDB()
 	defer db.Close()
