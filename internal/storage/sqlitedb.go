@@ -57,7 +57,7 @@ func InitDB() *sql.DB {
 	// Check if only one row was returned
 	if len(configs) > 1 {
 		errorMsg := fmt.Sprintf("Expected 1 row in Config table, got %d", len(configs))
-		panic(errorMsg)
+		util.Panic(fmt.Errorf(errorMsg))
 	}
 
 	if len(configs) == 0 {

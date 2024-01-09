@@ -138,9 +138,7 @@ func (o *Tool) processChronoMainThread(chronoMainThread parser.Thread, hrTool *T
 	}
 
 	re, err := regexp.Compile(`p\d+`)
-	if err != nil {
-		panic(err)
-	}
+	util.Panic(err)
 	var cleanedURLs []string
 	for _, link := range chronoLinks {
 		parsedURL, err := url.Parse(link)

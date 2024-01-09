@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"localdev/HrHelper/internal/config"
 	"log"
 	"net/http"
@@ -38,7 +39,18 @@ func PrintResponseStatus(status string) {
 	LongPrintlnPrintln("Response Status: " + statusColor + statusEmoji + " " + status + config.Reset)
 }
 
-func LongPrintlnPrintln(a ...any) (n int, err error) {
+func LongPrintlnPrintln(a ...any) {
+	// Redirect stderr to a buffer
+	originalStderr := os.Stderr
+	r, w, _ := os.Pipe()
+	os.Stderr = w
+
+	defer func() {
+		// Restore original stderr
+		w.Close()
+		os.Stderr = originalStderr
+	}()
+
 	// Convert all arguments into a string slice
 	stringArgs := make([]string, len(a))
 	for i, arg := range a {
@@ -49,22 +61,56 @@ func LongPrintlnPrintln(a ...any) (n int, err error) {
 	fullString := strings.Join(stringArgs, " ")
 
 	// Print to stdout using util.LongPrintlnPrintln
-	n, err = fmt.Println(fullString)
-	if err != nil {
-		return n, err
-	}
+	_, err := fmt.Println(fullString)
+	Panic(err)
 
 	// Append to a log file
 	file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return n, err
-	}
+	Panic(err)
 	defer file.Close()
 
 	logger := log.New(file, "", log.LstdFlags)
-	logger.Println(fullString)
+	logger.Println(RemoveUnicodeFromStr(fullString))
 
-	return n, nil
+	// Now handle stderr
+	if err := w.Close(); err != nil {
+		Panic(err)
+	}
+
+	var buf bytes.Buffer
+	if _, err := io.Copy(&buf, r); err != nil {
+		Panic(err)
+	}
+
+	stderrOutput := buf.String()
+	if stderrOutput != "" {
+		// Here you can log the stderr output
+		fmt.Fprintln(originalStderr, "Stderr:", stderrOutput)
+
+		// Also append to log file
+		logger.Println("Stderr:", RemoveUnicodeFromStr(stderrOutput))
+	}
+}
+
+func RemoveUnicodeFromStr(str string) string {
+	str = RemoveColorFromStr(str)
+	str = strings.Replace(str, config.CheckEmoji, "[OK]", -1)
+	str = strings.Replace(str, config.CrossEmoji, "[X]", -1)
+	str = strings.Replace(str, config.RightArrowEmoji, "-->", -1)
+	return str
+}
+
+func RemoveColorFromStr(str string) string {
+	str = strings.Replace(str, config.Reset, "", -1)
+	str = strings.Replace(str, config.Red, "", -1)
+	str = strings.Replace(str, config.Green, "", -1)
+	str = strings.Replace(str, config.Yellow, "", -1)
+	str = strings.Replace(str, config.Blue, "", -1)
+	str = strings.Replace(str, config.Purple, "", -1)
+	str = strings.Replace(str, config.Cyan, "", -1)
+	str = strings.Replace(str, config.Gray, "", -1)
+	str = strings.Replace(str, config.White, "", -1)
+	return str
 }
 
 func Panic(err error) {

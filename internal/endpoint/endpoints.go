@@ -69,7 +69,7 @@ func (o *Endpoints) ConfigureAndServeEndpoints() {
 
 	go func() {
 		if err := http.ListenAndServe(ServerPort, nil); err != nil {
-			panic(err)
+			util.Panic(err)
 		}
 	}()
 
