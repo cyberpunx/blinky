@@ -31,7 +31,7 @@
     <El p="3">
     {#if isLogin}
         {#if selectedMenu === MENU.HOME}
-            <Home />
+            <Home {config} {tool} />
         {:else if selectedMenu === MENU.POTIONS}
             <Potions {config} {tool} />
         {:else if selectedMenu === MENU.SETTINGS}

@@ -7,6 +7,7 @@ import (
 	"localdev/HrHelper/internal/config"
 	"localdev/HrHelper/internal/endpoint"
 	"localdev/HrHelper/internal/gsheet"
+	"localdev/HrHelper/internal/hogwartsforum/parser"
 	"localdev/HrHelper/internal/hogwartsforum/tool"
 	"localdev/HrHelper/internal/storage"
 	"localdev/HrHelper/internal/util"
@@ -63,7 +64,7 @@ func (a *App) Login(user, pass string, remeber bool) *tool.LoginResponse {
 	// Register the User at the Login Sheet {Username, Datetime}
 	nextRow, err := gsheet.FindNextAvailableRow(sheetService, gsheet.LogSheetId, gsheet.SheetRangeLogins)
 	util.Panic(err)
-	newRowData := []interface{}{loginResponse.Username, loginResponse.Datetime.Format("01/02/2006 15:04")}
+	newRowData := []interface{}{loginResponse.Username, loginResponse.Datetime.Format("02/01/2006 15:04")}
 	writeRange := fmt.Sprintf("Logins!A%d:B%d", nextRow, nextRow)
 	err = gsheet.WriteSheetData(sheetService, gsheet.LogSheetId, writeRange, newRowData)
 	util.Panic(err)
@@ -109,4 +110,10 @@ func (a *App) UpdateSheetConfig(tokenFile, credentialsFile, sheetId string) {
 	config.GSheetCredFile = &credentialsFile
 	config.GSheetId = &sheetId
 	storage.UpdateConfig(a.db, config)
+}
+
+func (a *App) GetThread(threadUrl string) *parser.Thread {
+	threadBody := a.tool.GetThread(threadUrl)
+	thread := a.tool.ParseThread(threadBody)
+	return thread
 }

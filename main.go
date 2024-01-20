@@ -23,7 +23,6 @@ const DEBUG = false
 
 func main() {
 	logpanic.InitPanicFile()
-
 	util.LongPrintlnPrintln("Starting HrHelper...")
 
 	db := storage.InitDB()
@@ -58,25 +57,30 @@ func main() {
 		endpoints := endpoint.NewEndpoints(hrTool)
 		endpoints.ConfigureAndServeEndpoints()
 
-		thread, err := hrTool.PostNewThread(
-			"44", // Subforo OCIO
-			"Mensaje de prueba",
-			"loremp ipsum dolor sit amet consectetur adipiscing elit",
-			true,
-			true)
-		util.Panic(err)
+		threadHtml := hrTool.GetThread(*conf.BaseUrl + "t24-001-normas-del-foro")
+		thread := hrTool.ParseThread(threadHtml)
+		println(thread.Title)
 
-		//sleep for 5 seconds to avoid spam detection
-		util.Sleep(5)
+		/*
+			thread, err := hrTool.PostNewThread(
+				"44", // Subforo OCIO
+				"Mensaje de prueba",
+				"loremp ipsum dolor sit amet consectetur adipiscing elit",
+				true,
+				true)
+			util.Panic(err)
 
-		threadReplied, err := hrTool.ReplyThread(
-			thread.Url,
-			"respuesta auto generada",
-			true,
-			true)
-		util.Panic(err)
+			//sleep for 5 seconds to avoid spam detection
+			util.Sleep(5)
 
-		util.LongPrintlnPrintln("Thread replied: " + config.Purple + threadReplied.Url + config.Reset + "\n")
+			threadReplied, err := hrTool.ReplyThread(
+				thread.Url,
+				"respuesta auto generada",
+				true,
+				true)
+			util.Panic(err)
+			util.LongPrintlnPrintln("Thread replied: " + config.Purple + threadReplied.Url + config.Reset + "\n")
+		*/
 
 		select {}
 	} else {

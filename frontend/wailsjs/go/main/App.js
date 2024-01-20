@@ -14,6 +14,10 @@ export function GetPotionThread() {
   return window['go']['main']['App']['GetPotionThread']();
 }
 
+export function GetThread(arg1) {
+  return window['go']['main']['App']['GetThread'](arg1);
+}
+
 export function GetTool() {
   return window['go']['main']['App']['GetTool']();
 }

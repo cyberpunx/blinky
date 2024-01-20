@@ -31,7 +31,7 @@
         </NavbarItem>
     </Navbar>
 
-    <El col="12" colSm="4" fontWeight="bolder" fontSize="3" style="color:var(--ds-color5)"> -= HR MOD HELPER =-</El>
+    <El col="12" colSm="4" fontWeight="bolder" fontSize="3" style="color:var(--ds-color5)">✨ Dobby! 💫</El>
 
     <El h="25" col="12" colSm="2" style="width: fit-content;">
     </El>

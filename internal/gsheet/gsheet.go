@@ -23,9 +23,7 @@ const (
 	SheetRangeDaysOff     = "Permisos Pociones!A269:B"
 	SheetRangePlayerBonus = "Logros Pociones!A2:B"
 	SheetRangeLogins      = "Logins!A2:B"
-
-	LogSheetId   = "1JpvrhEFvrasUnL6qDma86uqzyIfAj8Cra5QM60Us4Jo"
-	ClientSecret = `{"web":{"client_id":"889129888442-h6ccphpf26q7e23hc4up25gbnl0uldr0.apps.googleusercontent.com","project_id":"hogwarts-rol-407714","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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","redirect_uris":["http://localhost:8080/"] }}`
+	LogSheetId            = "1JpvrhEFvrasUnL6qDma86uqzyIfAj8Cra5QM60Us4Jo"
 )
 
 func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
@@ -190,9 +188,9 @@ func DisplayData(data [][]interface{}) {
 func GetSheetService(tokFile, credPath string) *sheets.Service {
 	ctx := context.Background()
 	// Read Credentials
-	//credentials, err := ReadCredentials(credPath)
-	//util.Panic(err)
-	credentials := []byte(ClientSecret)
+	credentials, err := ReadCredentials(credPath)
+	util.Panic(err)
+	//credentials := []byte(ClientSecret)
 
 	// Configure OAuth2 Client
 	gconfig, err := google.ConfigFromJSON(credentials, sheets.SpreadsheetsScope)

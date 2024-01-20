@@ -143,7 +143,7 @@ func (o *Tool) PostNewThread(subforumId, subject, message string, notify, attach
 		util.LongPrintlnPrintln(config.Green + config.CheckEmoji + config.Reset + " New Topic Posted OK: " + config.Green + viewTopicUrl + config.Reset)
 		t, topic_name := parser.GetTandTopicNameFromViewTopicUrl(viewTopicUrl)
 		threadBody := o.getThreadByViewTopic(t, topic_name)
-		thread := o.parseThread(threadBody)
+		thread := o.ParseThread(threadBody)
 		util.LongPrintlnPrintln("New Topic URL: " + config.Green + thread.Url + config.Reset)
 		return thread, nil
 	}
@@ -151,7 +151,7 @@ func (o *Tool) PostNewThread(subforumId, subject, message string, notify, attach
 
 func (o *Tool) ReplyThread(threadUrl, message string, notify, attachSig bool) (*parser.Thread, error) {
 
-	threadBody := o.getThread(threadUrl)
+	threadBody := o.GetThread(threadUrl)
 	threadTitle, _, err := parser.ThreadExtractTitleAndURL(threadBody)
 	util.LongPrintlnPrintln("Replying on topic: " + config.Purple + threadTitle + config.Reset)
 	tid, t, lt, auth1, auth2, err := parser.ThreadExtactReplyData(threadBody)
@@ -207,7 +207,7 @@ func (o *Tool) ReplyThread(threadUrl, message string, notify, attachSig bool) (*
 		util.LongPrintlnPrintln(config.Green + config.CheckEmoji + config.Reset + " New Reply Posted OK: " + config.Green + viewTopicUrl + config.Reset)
 		t, topic_name := parser.GetTandTopicNameFromViewTopicUrl(viewTopicUrl)
 		threadBody := o.getThreadByViewTopic(t, topic_name)
-		thread := o.parseThread(threadBody)
+		thread := o.ParseThread(threadBody)
 		lastPost := thread.Posts[len(thread.Posts)-1]
 		util.LongPrintlnPrintln("New Topic URL: " + config.Green + lastPost.Url + config.Reset)
 		return thread, nil
@@ -250,7 +250,7 @@ func (o *Tool) getForumHome() string {
 	return string(body)
 }
 
-func (o *Tool) getThread(threadUrl string) string {
+func (o *Tool) GetThread(threadUrl string) string {
 	util.LongPrintlnPrintln("Getting Thread: " + config.Purple + threadUrl + config.Reset)
 
 	baseDomain := *o.Config.BaseUrl

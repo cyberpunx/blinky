@@ -22,14 +22,14 @@ func (o *Tool) parseSubforum(subHtml string) []*parser.Thread {
 	var threads []*parser.Thread
 	for _, thread := range threadList {
 		threadUrl := parser.SubGetThreadUrl(thread)
-		threadHtml := o.getThread(threadUrl)
-		thread := o.parseThread(threadHtml)
+		threadHtml := o.GetThread(threadUrl)
+		thread := o.ParseThread(threadHtml)
 		threads = append(threads, thread)
 	}
 	return threads
 }
 
-func (o *Tool) parseThread(threadHtml string) *parser.Thread {
+func (o *Tool) ParseThread(threadHtml string) *parser.Thread {
 	threadTitle, threadUrl, err := parser.ThreadExtractTitleAndURL(threadHtml)
 	util.Panic(err)
 
@@ -53,7 +53,7 @@ func (o *Tool) parseThread(threadHtml string) *parser.Thread {
 
 		// Fetch the next page and update the threadHtml
 		pagesUrl = append(pagesUrl, nextPageURL)
-		nextPageHTML := o.getThread(nextPageURL)
+		nextPageHTML := o.GetThread(nextPageURL)
 		threadHtml = nextPageHTML
 	}
 
@@ -151,7 +151,7 @@ func (o *Tool) processChronoMainThread(chronoMainThread parser.Thread, hrTool *T
 
 	var threadListHtml []string
 	for _, link := range cleanedURLs {
-		chronoThreadtHtml := hrTool.getThread(link)
+		chronoThreadtHtml := hrTool.GetThread(link)
 		if parser.IsThreadVisible(chronoThreadtHtml) {
 			threadListHtml = append(threadListHtml, chronoThreadtHtml)
 		}
@@ -159,7 +159,7 @@ func (o *Tool) processChronoMainThread(chronoMainThread parser.Thread, hrTool *T
 
 	var chronoThreads []*chronology.ChronoThread
 	for _, threadHtml := range threadListHtml {
-		thread := hrTool.parseThread(threadHtml)
+		thread := hrTool.ParseThread(threadHtml)
 		chronoThread := chronology.ChronoThreadProcessor(*thread)
 		chronoThreads = append(chronoThreads, chronoThread)
 	}
@@ -229,8 +229,8 @@ func (o *Tool) ProcessPotionsThreadList(threadsUrls *[]string, timeLimit, turnLi
 	}
 	var reportMainList []potion.PotionClubReport
 	for _, threadUrl := range *threadsUrls {
-		potionThreadHtml := o.getThread(threadUrl)
-		potionThread := o.parseThread(potionThreadHtml)
+		potionThreadHtml := o.GetThread(threadUrl)
+		potionThread := o.ParseThread(potionThreadHtml)
 		report := o.processPotionsThread(*potionThread, *timeLimit, *turnLimit)
 		reportMainList = append(reportMainList, report)
 	}
